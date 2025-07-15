@@ -5,6 +5,7 @@
 <title>ネットワークの管理</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<link rel="stylesheet" type="text/css" href="themes/packages/@vivliostyle/theme-techbook/theme.css">
 </head>
 <body>
 <section class="level1" aria-labelledby="ネットワークの管理"><h1 id="ネットワークの管理">ネットワークの管理</h1><section class="level2" aria-labelledby="ネットワークインターフェイスの設定"><h2 id="ネットワークインターフェイスの設定">ネットワークインターフェイスの設定</h2><p>ネットワークインターフェースには、IPアドレスなどネットワーク通信のための各種設定が必要となります。ネットワーク環境に合わせて設定を変更します。</p><section class="level3" aria-labelledby="ipコマンドを使ったネットワークインターフェースの設定"><h3 id="ipコマンドを使ったネットワークインターフェースの設定">ipコマンドを使ったネットワークインターフェースの設定</h3><p>ipコマンドは、ネットワークインターフェースの状態の確認や設定、ルーティングテーブルの表示や追加、削除、ARPテーブルの確認や削除など、ネットワークにおける操作全般を行うことができます。</p></section><section class="level3" aria-labelledby="ネットワーク設定の確認"><h3 id="ネットワーク設定の確認">ネットワーク設定の確認</h3><p>IPアドレスやMACアドレスの確認にはip address showコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ip</span> address show</span></span>

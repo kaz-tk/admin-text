@@ -8,7 +8,7 @@
   "name": "Linuxシステム管理標準教科書",
   "author": "LPI-Japan",
   "inLanguage": "ja",
-  "dateModified": "2025-07-15T05:13:20.991Z",
+  "dateModified": "2025-07-15T05:29:24.169Z",
   "readingOrder": [
     {
       "url": "index.html",
@@ -49,6 +49,24 @@
       "name": "CentOS 7への移行"
     }
   ],
-  "resources": [],
+  "resources": [
+    "themes/packages/@vivliostyle/theme-base/css/common/basic.css",
+    "themes/packages/@vivliostyle/theme-base/css/common/meta-properties.css",
+    "themes/packages/@vivliostyle/theme-base/css/common/reset.css",
+    "themes/packages/@vivliostyle/theme-base/css/lib/prism/base.css",
+    "themes/packages/@vivliostyle/theme-base/css/lib/prism/theme-okaidia.css",
+    "themes/packages/@vivliostyle/theme-base/css/lib/prism/theme-prism.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/crossref.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/endnote.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/footnote-external-link.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/footnote.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/page.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/section.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/toc.css",
+    "themes/packages/@vivliostyle/theme-base/css/partial/utility-classes.css",
+    "themes/packages/@vivliostyle/theme-base/theme-all.css",
+    "themes/packages/@vivliostyle/theme-base/theme-basic.css",
+    "themes/packages/@vivliostyle/theme-techbook/theme.css"
+  ],
   "links": []
 }

@@ -5,6 +5,7 @@
 <title>ファイルシステムの管理</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<link rel="stylesheet" type="text/css" href="themes/packages/@vivliostyle/theme-techbook/theme.css">
 </head>
 <body>
 <section class="level1" aria-labelledby="ファイルシステムの管理"><h1 id="ファイルシステムの管理">ファイルシステムの管理</h1><section class="level2" aria-labelledby="アクセス権の管理"><h2 id="アクセス権の管理">アクセス権の管理</h2><p>LinuxはPOSIXで示されているアクセス制御に準拠しています。POSIXとは「Portable Operating System Interface for UNIX」の略で、IEEEによって定められた、UNIXベースのOSの仕様セットです。ユーザID（uid）/グループID（gid）とパーミッションの組み合わせでファイルに対するアクセス権を管理しています。</p><section class="level3" aria-labelledby="uidとgid"><h3 id="uidとgid">UIDとGID</h3><p>ユーザID（uid：User Identifier)はLinuxシステムでユーザを識別するためのユニークな番号です。Linuxで追加されたユーザカウントには、それぞれ個別にuidが割り振られます。<br>
