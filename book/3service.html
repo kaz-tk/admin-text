@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>サービスの管理</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+<section class="level1" aria-labelledby="サービスの管理"><h1 id="サービスの管理">サービスの管理</h1><section class="level2" aria-labelledby="osが起動するまでのプロセス"><h2 id="osが起動するまでのプロセス">OSが起動するまでのプロセス</h2><p>マシンに電源を入れた後、以下のような順番でシステムの初期化が行われ、OSが起動します。</p><ol>
+<li>電源オン</li>
+<li>BIOS起動とハードウェアの初期化</li>
+<li>ブートローダー（GRUB）の起動</li>
+<li>Linuxカーネルイメージの読み込み</li>
+<li>initプロセスの起動</li>
+<li>各種サービスの起動</li>
+<li>OS起動</li>
+</ol><section class="level3" aria-labelledby="ブートローダーgrubの起動"><h3 id="ブートローダーgrubの起動">ブートローダーGRUBの起動</h3><p>マシンの電源をオンにすると、BIOSが起動してハードウェアの初期化が行われ、起動に使用するブートデバイス（ハードディスクなど）が決定します。ブートデバイスからブートローダーであるGRUBが読み込まれ、起動処理が引き継がれます。<br>
+GRUBは、Linuxカーネルのイメージをメモリ上にロードする役割を持っています。</p><figure><img src="grubmenu.png" alt="GRUB選択画面"><figcaption aria-hidden="true">GRUB選択画面</figcaption></figure><p>Linuxカーネルイメージが複数ある場合は、GRUBの初期画面が表示されている時に何かキーを入力すると、GRUBのメニュー画面が表示されます。ロードしたいイメージを選択して、Enterキーを押します。</p><p>GRUBの設定確認<br>
+grubby --info=ALL</p><p>GRUBのデフォルト起動カーネルの確認<br>
+grubby --default-kernel</p><p>GRUBのデフォルト起動カーネルのインデックス確認<br>
+grubby --default-index</p><p>GRUBのデフォルト起動カーネルの変更<br>
+grubby --set-default /boot/vmlinuz-5.14.0-503.11.1.el9_5.x86_64</p><p>GRUBのデフォルト起動カーネルのインデックスによる変更<br>
+grubby --set-default 1</p></section><section class="level3" aria-labelledby="grub設定"><h3 id="grub設定">GRUB設定</h3><p>$ sudo grubby --info=ALL<br>
+[sudo] linuc のパスワード:<br>
+index=0<br>
+kernel="/boot/vmlinuz-5.14.0-570.25.1.el9_6.aarch64"<br>
+args="ro crashkernel=1G-4G:256M,4G-64G:320M,64G-:576M rd.lvm.lv=almalinux_vbox/root rd.lvm.lv=almalinux_vbox/swap rhgb quiet $tuned_params"<br>
+root="/dev/mapper/almalinux_vbox-root"<br>
+initrd="/boot/initramfs-5.14.0-570.25.1.el9_6.aarch64.img $tuned_initrd"<br>
+title="AlmaLinux (5.14.0-570.25.1.el9_6.aarch64) 9.6 (Sage Margay)"<br>
+id="9e034831eddf4bbb9525d8a0f6676c28-5.14.0-570.25.1.el9_6.aarch64"<br>
+index=1<br>
+kernel="/boot/vmlinuz-5.14.0-570.12.1.el9_6.aarch64"<br>
+args="ro crashkernel=1G-4G:256M,4G-64G:320M,64G-:576M rd.lvm.lv=almalinux_vbox/root rd.lvm.lv=almalinux_vbox/swap rhgb quiet $tuned_params"<br>
+root="/dev/mapper/almalinux_vbox-root"<br>
+initrd="/boot/initramfs-5.14.0-570.12.1.el9_6.aarch64.img $tuned_initrd"<br>
+title="AlmaLinux (5.14.0-570.12.1.el9_6.aarch64) 9.6 (Sage Margay)"<br>
+id="9e034831eddf4bbb9525d8a0f6676c28-5.14.0-570.12.1.el9_6.aarch64"<br>
+index=2<br>
+kernel="/boot/vmlinuz-0-rescue-9e034831eddf4bbb9525d8a0f6676c28"<br>
+args="ro crashkernel=1G-4G:256M,4G-64G:320M,64G-:576M rd.lvm.lv=almalinux_vbox/root rd.lvm.lv=almalinux_vbox/swap rhgb quiet"<br>
+root="/dev/mapper/almalinux_vbox-root"<br>
+initrd="/boot/initramfs-0-rescue-9e034831eddf4bbb9525d8a0f6676c28.img"<br>
+title="AlmaLinux (0-rescue-9e034831eddf4bbb9525d8a0f6676c28) 9.6 (Sage Margay)"<br>
+id="9e034831eddf4bbb9525d8a0f6676c28-0-rescue"</p><p>設定の意味は以下の通りです。</p><p>index<br>
+ブートメニューの選択肢のインデックス番号です。</p><p>kernel<br>
+起動に使用するカーネルです。</p><p>args<br>
+カーネル起動時に引き渡される値です。</p><p>root<br>
+起動時に参照されるルートデバイスです。</p><p>initrd<br>
+起動時に使用される起動RAMディスクです。</p><p>title<br>
+ブートメニューの選択肢に表示される文字列です。</p><p>id<br>
+マシンのユニークIDとカーネルバージョンを組み合わせた値です。</p></section><section class="level3" aria-labelledby="カーネルの起動"><h3 id="カーネルの起動">カーネルの起動</h3><p>GRUBで指定されたLinuxカーネルイメージがメモリに読み込まれて、カーネルが起動します。カーネルはハードウェアを初期化し、カーネルの各種機能を有効にしていきます。</p><p>カーネルは必要に応じてモジュールを読み込みますが、モジュールは初期化RAMディスク（initramfs）に含まれています。カーネルは初期化RAMディスクをメモリに読み込み、仮のルートファイルシステムとして利用可能にすることで、必要となるモジュールのファイルが読み込めるようになります。</p><section class="level4" aria-labelledby="dmesgによるカーネル起動時の動作の確認"><h4 id="dmesgによるカーネル起動時の動作の確認">dmesgによるカーネル起動時の動作の確認</h4><p>カーネルが起動する際の動作の様子は、dmesgコマンドで確認できます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">dmesg</span></span></span>
+<span class="token output">Initializing cgroup subsys cpuset
+Initializing cgroup subsys cpu
+Linux version 2.6.32-504.el6.x86_64 (mockbuild@c6b9.bsys.dev.centos.org) (gcc version 4.4.7 20120313 (Red Hat 4.4.7-11) (GCC) ) #1 SMP Wed Oct 15 04:27:16 UTC 2014
+Command line: ro root=/dev/mapper/vg_server-lv_root rd_LVM_LV=vg_server/lv_swap rd_NO_LUKS rd_LVM_LV=vg_server/lv_root rd_NO_MD crashkernel=auto  KEYBOARDTYPE=pc KEYTABLE=jp106 LANG=ja_JP.UTF-8 rd_NO_DM rhgb quiet
+KERNEL supported cpus:
+  Intel GenuineIntel
+  AMD AuthenticAMD
+  Centaur CentaurHauls
+Disabled fast string operations
+BIOS-provided physical RAM map:
+ BIOS-e820: 0000000000000000 - 000000000009ec00 (usable)
+（略）</span></code></pre></section></section></section><section class="level2" aria-labelledby="systemdについて"><h2 id="systemdについて">systemdについて</h2><section class="level3" aria-labelledby="ユニットでの管理"><h3 id="ユニットでの管理">ユニットでの管理</h3><p>systemdでは「ユニット」という単位でシステムを管理します。ユニットには、「ターゲット」（ランレベルに相当）ユニットや「サービス」ユニットがあり、それぞれのユニットは依存関係の定義ができるようになっています。</p><p>依存関係とは、たとえば「このサービスを実行するにはあらかじめこのサービスが実行されていなければならない」という関係です。systemdでは依存関係にないサービスを「並列処理」で実行するため、高速にシステムを起動できるという利点があります。</p><p>主なユニットの種類は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>ユニット</th><th>役割</th></tr></thead><tbody><tr><td>service</td><td>従来のサービスと同様</td></tr><tr><td>target</td><td>サービスを取りまとめるためのユニット</td></tr><tr><td>mount</td><td>マウントポイント</td></tr><tr><td>swap</td><td>スワップ領域</td></tr><tr><td>device</td><td>デバイス</td></tr></tbody></table></section><section class="level3" aria-labelledby="サービスの操作"><h3 id="サービスの操作">サービスの操作</h3><p>systemdでは、サービスの起動や停止を行うのにsystemctlコマンドを使用します。</p><p>Webサービスの起動や停止、再起動、そして状態の確認を行うには、以下のsystemctlコマンドを使用します。</p><section class="level4" aria-labelledby="サービスの起動"><h4 id="サービスの起動">サービスの起動</h4><p>systemctl startコマンドで、サービスを起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl start httpd</span></span></code></pre></section><section class="level4" aria-labelledby="サービスのステータス確認"><h4 id="サービスのステータス確認">サービスのステータス確認</h4><p>systemctl statusコマンドで、サービスのステータスを確認できます。</p><p>systemdでは、サービスのプロセスを「コントロールグループ」（cgroup）というLinuxカーネルの仕組みで実行するように変わりました。cgroupを使うことで、CPUやメモリなどのリソースを柔軟に割り当てることができる利点があります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl status httpd</span></span>
+<span class="token output">httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: active (running) since 水 2015-01-28 15:23:50 JST; 33s ago
+ Main PID: 2926 (httpd)
+   Status: "Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec"
+   CGroup: /system.slice/httpd.service
+           ├─2926 /usr/sbin/httpd -DFOREGROUND
+           ├─2927 /usr/sbin/httpd -DFOREGROUND
+           ├─2928 /usr/sbin/httpd -DFOREGROUND
+           ├─2929 /usr/sbin/httpd -DFOREGROUND
+           ├─2930 /usr/sbin/httpd -DFOREGROUND
+           └─2931 /usr/sbin/httpd -DFOREGROUND
+
+ 1月 28 15:23:50 centos7.example.com httpd[2926]: AH00557: httpd: apr_sockad...
+ 1月 28 15:23:50 centos7.example.com httpd[2926]: AH00558: httpd: Could not ...
+ 1月 28 15:23:50 centos7.example.com systemd[1]: Started The Apache HTTP Ser...
+Hint: Some lines were ellipsized, use -l to show in full.</span></code></pre></section><section class="level4" aria-labelledby="サービスの再起動"><h4 id="サービスの再起動">サービスの再起動</h4><p>systemctl restartコマンドで、サービスを再起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl restart httpd</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl status httpd</span></span>
+<span class="token output">httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: active (running) since 水 2015-01-28 15:24:40 JST; 2s ago
+  Process: 2945 ExecStop=/bin/kill -WINCH ${MAINPID} (code=exited, status=0/SUCCESS)
+ Main PID: 2950 (httpd)
+（略）</span></code></pre></section><section class="level4" aria-labelledby="サービスの停止"><h4 id="サービスの停止">サービスの停止</h4><p>systemctl stopコマンドで、サービスを停止します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl stop httpd</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl status httpd</span></span>
+<span class="token output">httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: inactive (dead)</span></code></pre></section></section><section class="level3" aria-labelledby="ユニット一覧の取得"><h3 id="ユニット一覧の取得">ユニット一覧の取得</h3><p>systemdで管理されているユニットの一覧を取得するには、systemctl list-unit-filesコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-unit-files</span></span></code></pre><p>すべての種類のユニットが表示されてしまうので、ユニットの種類を絞り込むには-tオプションを付与して実行します。</p><p>たとえば、serviceユニットだけを表示するには以下のsystemctlコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-unit-files -t <span class="token function">service</span></span></span></code></pre><p>表示されるステータス（STATE）の意味は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>ステータス</th><th>意味</th></tr></thead><tbody><tr><td>enabled</td><td>システム起動時に実行される</td></tr><tr><td>disabled</td><td>システム起動時に実行されない</td></tr><tr><td>static</td><td>システム起動時の実行の有無は設定できない</td></tr></tbody></table></section><section class="level3" aria-labelledby="現在のユニットの状況を確認"><h3 id="現在のユニットの状況を確認">現在のユニットの状況を確認</h3><p>現在のユニットの状況を確認するには、systemctl list-unitsコマンドを実行します。systemctlコマンドのデフォルトはこのサブコマンドの指定になっています。</p><p>以下の例は同じ結果を返します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl</span></span></code></pre><p>-tオプションを使って、serviceユニットだけに絞り込むこともできます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl -t <span class="token function">service</span></span></span>
+<span class="token output">UNIT                         LOAD   ACTIVE SUB     DESCRIPTION
+abrt-ccpp.service            loaded active exited  Install ABRT coredump hook
+abrt-oops.service            loaded active running ABRT kernel log watcher
+abrt-xorg.service            loaded active running ABRT Xorg log watcher
+abrtd.service                loaded active running ABRT Automated Bug Reporting
+alsa-state.service           loaded active running Manage Sound Card State (rest
+atd.service                  loaded active running Job spooling tools
+（略）
+kdump.service                loaded failed failed  Crash recovery kernel arming
+（略）</span></code></pre><p>表示の意味は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td>UNIT</td><td>ユニット名</td></tr><tr><td>LOAD</td><td>systemdへの設定の読み込み状況</td></tr><tr><td>ACTIVE</td><td>実行状態の概要。activeかinactiveで表される</td></tr><tr><td>SUB</td><td>実行状態の詳細。running（実行中）やexited（実行したが終了した）などで表される。</td></tr><tr><td>DESCRIPTION</td><td>ユニットの説明</td></tr></tbody></table><p>デフォルトでは、項目ACTIVEの実行状態がactiveになっているもののみが表示されています。inactiveのユニットも表示するには--allオプションを付与して実行します。</p><p>項目LOADは、systemctl maskコマンドで無効化されるとmaskedに変わります。詳細は後述します。</p><p>項目ACTIVEがfailedになっていると、何らかの原因で起動失敗しているということになります。上記の例では、kdump（カーネルダンプ）サービスの起動に失敗しています。</p></section><section class="level3" aria-labelledby="デバイス一覧の確認"><h3 id="デバイス一覧の確認">デバイス一覧の確認</h3><p>-t deviceオプションを付与して、デバイス一覧を表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units -t device</span></span>
+<span class="token output">UNIT                                                                                     LOAD   ACTIVE SUB     DESCRIPTION
+sys-devices-pci0000:00-0000:00:05.0-virtio0-net-eth0.device                              loaded active plugged Virtio network device
+sys-devices-pci0000:00-0000:00:1f.2-ata3-host2-target2:0:0-2:0:0:0-block-sda-sda1.device loaded active plugged CentOS_7-0_SSD
+（略）</span></code></pre></section><section class="level3" aria-labelledby="マウント状況の確認"><h3 id="マウント状況の確認">マウント状況の確認</h3><p>-t mountオプションを付与して、マウントの状況一覧を表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units -t <span class="token function">mount</span></span></span>
+<span class="token output">UNIT                         LOAD   ACTIVE SUB     DESCRIPTION
+-.mount                      loaded active mounted /
+boot.mount                   loaded active mounted /boot
+dev-hugepages.mount          loaded active mounted Huge Pages File System
+dev-mqueue.mount             loaded active mounted POSIX Message Queue File Syst
+home.mount                   loaded active mounted /home
+（略）</span></code></pre></section><section class="level3" aria-labelledby="スワップ状況の確認"><h3 id="スワップ状況の確認">スワップ状況の確認</h3><p>-t swapオプションを付与して、スワップの状況一覧を表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units -t swap</span></span>
+<span class="token output">UNIT             LOAD   ACTIVE SUB    DESCRIPTION
+dev-dm¥x2d0.swap loaded active active /dev/dm-0
+（略）</span></code></pre></section><section class="level3" aria-labelledby="サービスの自動起動の設定"><h3 id="サービスの自動起動の設定">サービスの自動起動の設定</h3><p>システム起動時にサービスを自動起動するには、systemctl enableコマンドを実行します。</p><p>例として、Webサービスをシステム起動時に自動起動するように設定します。/usr/lib/systemd/system/httpd.serviceがWebサービスの起動スクリプトです。systemctl enableコマンドを実行すると、/etc/systemd/system/multi-user.target.wantsディレクトリにシンボリックリンクが作成されます。</p><p>この動作は、multi-user.targetターゲットユニットが呼び出された時に、シンボリックリンクの起動スクリプトが実行されるように設定しています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl <span class="token builtin class-name">enable</span> httpd</span></span>
+<span class="token output">ln -s '/usr/lib/systemd/system/httpd.service' '/etc/systemd/system/multi-user.target.wants/httpd.service'</span></code></pre><p>システム起動時の自動起動を行わないようにするには、systemctl disableコマンドを実行します。作成されたシンボリックリンクが削除され、起動スクリプトは呼び出されなくなります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl disable httpd</span></span>
+<span class="token output">rm '/etc/systemd/system/multi-user.target.wants/httpd.service'</span></code></pre></section><section class="level3" aria-labelledby="サービスのsystemdからの除外"><h3 id="サービスのsystemdからの除外">サービスのsystemdからの除外</h3><p>systemctl maskコマンドを実行すると、指定したサービスがsystemdの管理から除外され、手動での起動も行えなくなります。</p><p>動作としては、/etc/systemd/system/httpd.serviceが/dev/nullへのシンボリックリンクとして作成され、この起動スクリプトが呼び出されても何も行われなくなります。</p><p>Webサービスをsystemdから除外します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl mask httpd</span></span>
+<span class="token output">ln -s '/dev/null' '/etc/systemd/system/httpd.service'
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl start httpd</span></span>
+<span class="token output">Failed to issue method call: Unit httpd.service is masked.</span></code></pre><p>systemctl is-enabledコマンドで、サービスの状態が確認できます。httpdサービスの状態はmaskedとなっています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl is-enabled httpd</span></span>
+<span class="token output">masked</span></code></pre><p>systemctl unmaskコマンドを実行すると、シンボリックリンクが削除されて、指定したサービスがsystemdで管理されるようになります。httpdサービスの状態はdisabledになります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl unmask httpd</span></span>
+<span class="token output">rm '/etc/systemd/system/httpd.service'
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl is-enabled httpd</span></span>
+<span class="token output">disabled</span></code></pre></section><section class="level3" aria-labelledby="systemdのサービスに関連するディレクトリとシステム起動の仕組み"><h3 id="systemdのサービスに関連するディレクトリとシステム起動の仕組み">systemdのサービスに関連するディレクトリとシステム起動の仕組み</h3><p>systemdが内部的にどのような仕組みになっているのか、関連するディレクトリを解説します。</p><p>systemctl enableコマンドの動作を見ても分かる通り、systemdの仕組みにおいて、関連するディレクトリは以下の2つです。</p><section class="level4" aria-labelledby="usrlibsystemdsystemディレクトリ"><h4 id="usrlibsystemdsystemディレクトリ">/usr/lib/systemd/systemディレクトリ</h4><p>サービス起動スクリプトが格納されています。/etc/rc.d/init.dディレクトリに相当します。</p></section><section class="level4" aria-labelledby="etcsystemdsystemディレクトリ"><h4 id="etcsystemdsystemディレクトリ">/etc/systemd/systemディレクトリ</h4><p>サービス起動スクリプトに対するシンボリックリンクが配置されます。/etc/rc.dディレクトリに相当します。</p><p>システム起動時のsystemdの動作は、/etc/systemd/systemディレクトリ以下のサブディレクトリ内に作成されたサービス起動スクリプトへのシンボリックリンクが順次実行されてサービスが起動されます。シンボリックリンクの作成される場所は、役割別のターゲットユニット毎にディレクトリが分けられています。</p><p>ターゲット毎のディレクトリとその役割、実行の順番は以下の通りです。</p></section><section class="level4" aria-labelledby="1-etcsystemdsystemsysinittargetwants"><h4 id="1-etcsystemdsystemsysinittargetwants">1. /etc/systemd/system/sysinit.target.wants/</h4><p>システムの初期に実行されるスクリプトです。rc.sysinitスクリプトに相当します。</p></section><section class="level4" aria-labelledby="2-etcsystemdsystembasictargetwants"><h4 id="2-etcsystemdsystembasictargetwants">2. /etc/systemd/system/basic.target.wants/</h4><p>システム共通に実行されるスクリプトです。</p></section><section class="level4" aria-labelledby="3-etcsystemdsystemmulti-usertargetwants"><h4 id="3-etcsystemdsystemmulti-usertargetwants">3. /etc/systemd/system/multi-user.target.wants/</h4><p>従来のランレベル3（CUI）に相当します。</p></section><section class="level4" aria-labelledby="4-etcsystemdsystemgraphicaltargetwants"><h4 id="4-etcsystemdsystemgraphicaltargetwants">4. /etc/systemd/system/graphical.target.wants/</h4><p>従来のランレベル5（GUI）に相当します。</p><p>systemdではmulti-user.targetを実行後にgraphical.targetが実行されるようになっています。</p><p>どこまで実行するかは、次に説明するデフォルトターゲットの設定によって決められています。</p></section></section><section class="level3" aria-labelledby="デフォルトターゲットの変更"><h3 id="デフォルトターゲットの変更">デフォルトターゲットの変更</h3><p>systemdではランレベルではなく、サービス起動スクリプトを順番に実行していき、デフォルトターゲットで指定されたターゲットまで実行します。デフォルトターゲットを変更することで、CUI起動をするか、GUI起動にするかを選択できます。</p><p>デフォルトターゲットの変更は、systemctl set-defaultコマンドを実行します。</p><section class="level4" aria-labelledby="デフォルトターゲットの確認"><h4 id="デフォルトターゲットの確認">デフォルトターゲットの確認</h4><p>systemctl get-defaultコマンドで、現在のデフォルトターゲットを確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl get-default</span></span>
+<span class="token output">graphical.target</span></code></pre></section><section class="level4" aria-labelledby="デフォルトターゲットをcuiに変更"><h4 id="デフォルトターゲットをcuiに変更">デフォルトターゲットをCUIに変更</h4><p>デフォルトターゲットをmulti-user.targetに変更し、再起動します。CUIで起動してくることを確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl set-default multi-user.target</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">reboot</span></span></span></code></pre></section><section class="level4" aria-labelledby="デフォルトターゲットをguiに変更"><h4 id="デフォルトターゲットをguiに変更">デフォルトターゲットをGUIに変更</h4><p>GUIでの起動に戻すには、以下のsystemctl set-defaultコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl set-default graphical.target</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">reboot</span></span></span></code></pre></section></section><section class="level3" aria-labelledby="現在のターゲットの一時的な変更"><h3 id="現在のターゲットの一時的な変更">現在のターゲットの一時的な変更</h3><p>systemdでの現在のターゲットを一時的に変更するには、systemctl isolateコマンドを実行します。</p><p>GUIからCUIに変更します。GUIログインしている場合、ログアウトします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl isolate multi-user.target</span></span></code></pre><p>CUIからGUIに変更します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl isolate graphical.target</span></span></code></pre></section><section class="level3" aria-labelledby="anacron-によるジョブの実行"><h3 id="anacron-によるジョブの実行">anacron によるジョブの実行</h3><p>cronを使って決められた時刻に一斉にcronジョブを実行すると、システムの負荷が集中してしまう欠点があります。特にクラウド環境において同じ時刻にcronジョブが実行されてしまうと、CPUやメモリ、I/Oなどの共有リソースを複数の仮想マシンが一斉に取り合うことになります。<br>
+そこでanacronを使ってジョブを実行すると、ジョブが実行されるタイミングがランダムに決められるので、ジョブ実行が同時発生しないようになります。</p><p>anacronで実行させたいジョブはシェルスクリプトとして作成し、実行したい時間間隔に応じて以下の表のディレクトリ内に配置します。シェルスクリプトのファイルを配置するだけでジョブが定期実行されるようになるので、定期実行するジョブをパッケージのインストール時に簡単に登録できるというメリットもあります。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>実行する時間間隔</th><th>ディレクトリ</th></tr></thead><tbody><tr><td>1日おき</td><td>/etc/cron.daily</td></tr><tr><td>1週間おき</td><td>/etc/cron.weekly</td></tr><tr><td>1ヶ月おき</td><td>/etc/cron.monthly</td></tr></tbody></table></section><section class="level3" aria-labelledby="anacronの設定"><h3 id="anacronの設定">anacronの設定</h3><p>anacronは、1時間おきにcrondから起動されます。起動時に設定ファイルとして/etc/anacrontabを読み込み、実行が必要なジョブを実行します。</p><p>デフォルトの設定ファイルは以下の通りです。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/anacrontab</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">/etc/anacrontab: configuration <span class="token function">file</span> <span class="token keyword">for</span> anacron</span></span>
+
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">See anacron<span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">)</span> and anacrontab<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span> <span class="token keyword">for</span> details.</span></span>
+
+<span class="token output">SHELL=/bin/sh
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">the maximal random delay added to the base delay of the <span class="token function">jobs</span></span></span>
+<span class="token output">RANDOM_DELAY=45
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">the <span class="token function">jobs</span> will be started during the following hours only</span></span>
+<span class="token output">START_HOURS_RANGE=3-22
+
+#period in days   delay in minutes   job-identifier   command
+1       5       cron.daily              nice run-parts /etc/cron.daily
+7       25      cron.weekly             nice run-parts /etc/cron.weekly
+@monthly 45     cron.monthly            nice run-parts /etc/cron.monthly</span></code></pre><p>ジョブの実行頻度は、ジョブ設定の最初の数字で実行間隔を日数で記述します。デフォルトでは1日おきと7日おきのジョブが設定されています。1ヶ月毎の設定のように、実行間隔の設定は数値以外にマクロが用意されています。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>マクロ</th><th>設定値</th></tr></thead><tbody><tr><td>@daily</td><td>1（毎日1回）</td></tr><tr><td>@weekly</td><td>7（毎週1回）</td></tr><tr><td>@monthly</td><td>毎月1回</td></tr></tbody></table><p>各ジョブは、それぞれの基準遅延時間に最大45分のランダムに決められた遅延時間（RANDOM_DELAY）を足して実行されます。基準遅延時間は、ジョブ定義の2番目の数字です。デフォルトでは、1日おきのジョブが5分、1週間おきのジョブが25分、1ヶ月おきのジョブが45分です。仮想マシン間で同時にジョブが実行されないようにしたい場合には、基準遅延時間を大きくずらす必要があります。</p><p>anacronがジョブを実行するのは、START_HOURS_RANGEで設定されている3時から22時の間です。anacronはシステムが停止していた場合、実行していなかったジョブを再起動後に実行する仕組みがあります。そのため、このようにジョブ実行時間が広く指定されています。<br>
+ただし、この設定では日中でもジョブが実行される可能性があります。もし、夜間にだけジョブを実行したい場合には、/etc/anacrontabに以下のように指定するといいでしょう。ここでは夜間の23時から翌日の朝6時までを指定しています。</p><pre class="language-text"><code class="language-text">START_HOURS_RANGE=23-6</code></pre></section></section><section class="level2" aria-labelledby="ntpによる時刻管理"><h2 id="ntpによる時刻管理">NTPによる時刻管理</h2><p>コンピューターの時刻は、意外と精度が低く1日ごとに数秒狂っていきます。しかも、電源OFFにした状態だとさらに狂いやすくなります。認証やデータベース、ログを集中管理するような環境の場合には、この時刻のずれが大きな問題になる場合があります。</p><p>システムの時刻を合わせる仕組みとして、NTP（Network Time Protocol）があります。NTPを利用することで、ネットワーク上のNTPサーバから時刻を取得し、システムの時刻を正確な時刻に合わせる事ができます。</p><section class="level3" aria-labelledby="ntpサービスのインストール"><h3 id="ntpサービスのインストール">NTPサービスのインストール</h3><p>NTPクライアントに対して時刻を提供するNTPサーバを実行するには、NTPサービスをインストールします。NTPサービスは、NTPサーバとしての機能と、自分自身の時刻をNTPサーバに同期させるNTPクライアントの機能の両方を備えています。</p><p>NTPサービスがインストールされていない場合には、yumコマンドでインストールします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum <span class="token function">install</span> ntp</span></span></code></pre></section><section class="level3" aria-labelledby="ntpサービスの起動と自動起動の有効化"><h3 id="ntpサービスの起動と自動起動の有効化">NTPサービスの起動と自動起動の有効化</h3><p>NTPサービス（ntpd）を起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> ntpd start</span></span></code></pre><p>chkconfigコマンドで自動起動を有効化します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">chkconfig</span> ntpd on</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">chkconfig</span> --list ntpd</span></span>
+<span class="token output">ntpd            0:off   1:off   2:off   3:on    4:off   5:off   6:off</span></code></pre><p>NTPサーバを起動してから、しばらくすると上位のNTPサーバと時刻同期が始まります。時刻同期は徐々に行われるため、すぐには完了しません。</p></section><section class="level3" aria-labelledby="上位ntpサーバの設定"><h3 id="上位ntpサーバの設定">上位NTPサーバの設定</h3><p>同期する時刻を提供してくれる上位NTPサーバの設定は/etc/ntp.confに記述します。サーバは複数指定できます。CentOSでは、デフォルトでpool.ntp.orgのNTPサーバに同期するように設定されています。pool.ntp.orgはインターネット上のNTPサーバのアドレスをランダムに返すようになっています。</p><pre class="language-text"><code class="language-text">server 0.centos.pool.ntp.org iburst
+server 1.centos.pool.ntp.org iburst
+server 2.centos.pool.ntp.org iburst
+server 3.centos.pool.ntp.org iburst</code></pre><p>ntpqコマンドを実行して、外部のNTPサーバとの時刻同期の状態を確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">ntpq -p</span></span>
+<span class="token output">     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+*219x123x70x91.a 192.168.7.123    2 u  424 1024  377    2.296   -0.851   1.985
+-balthasar.gimas 65.32.162.194    3 u  764 1024  377    4.574    3.282   1.737
++ntp-v6.chobi.pa 61.114.187.55    2 u  960 1024  337    1.012    0.546   1.170
++the.platformnin 22.42.17.250     3 u   46 1024  377    3.686    0.123   2.642</span></code></pre><p>一番左に表示されているステータスの読み方は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>表示</th><th>意味</th></tr></thead><tbody><tr><td>*</td><td>同期している</td></tr><tr><td>+</td><td>いつでも同期可能</td></tr><tr><td>x</td><td>クロックが不正確なため無効</td></tr><tr><td>空白（スペース）</td><td>使用不可（通信不可、同期に時間が掛かっている等）</td></tr></tbody></table></section><section class="level3" aria-labelledby="ntpクライアントからの時刻同期リクエストの制御"><h3 id="ntpクライアントからの時刻同期リクエストの制御">NTPクライアントからの時刻同期リクエストの制御</h3><p>NTPサービスは、デフォルトではNTPクライアントからの時刻同期リクエストを受け付けないように設定されています。</p><p>以下の例では、NTPサーバの設定ファイル/etc/ntp.confに「192.168.0.0/255.255.255.0」のネットワークに属しているNTPクライアントからの時刻同期リクエストを許可するように設定しています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">vi</span> /etc/ntp.conf</span></span>
+
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Hosts on <span class="token builtin class-name">local</span> network are <span class="token function">less</span> restricted.</span></span>
+<span class="token output">#restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap
+※restrict 192.168.0.0 mask 255.255.255.0 nomodify notrap ←この行を追加</span></code></pre><p>設定を変更したらntpサービスを再起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> ntpd restart</span></span>
+<span class="token output">ntpd を停止中:                                             [  OK  ]
+ntpd を起動中:                                             [  OK  ]</span></code></pre></section><section class="level3" aria-labelledby="ファイアーウォールの設定変更"><h3 id="ファイアーウォールの設定変更">ファイアーウォールの設定変更</h3><p>NTPサーバはUDPのポート番号123番でNTPクライアントからの時刻同期リクエストを待ち受けています。iptablesでパケットフィルタリングを行っている場合、ルールを追加する必要があります。</p><p>/etc/sysconfig/iptablesを編集してルールを追加し、iptablesサービスをリロードします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">vi</span> /etc/sysconfig/iptables</span></span>
+
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Firewall configuration written by system-config-firewall</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Manual customization of this <span class="token function">file</span> is not recommended.</span></span>
+<span class="token output">*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+※-A INPUT -m state --state NEW -m udp -p udp --dport 123 -j ACCEPT ←この行を追加※
+-A INPUT -j REJECT --reject-with icmp-host-prohibited
+-A FORWARD -j REJECT --reject-with icmp-host-prohibited
+COMMIT</span></code></pre><p>serviceコマンドで、iptablesサービスをリロードします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> iptables reload</span></span>
+<span class="token output">iptables: Trying to reload firewall rules:                 [  OK  ]
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iptables -L</span></span>
+<span class="token output">Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+（略）
+ACCEPT     udp  --  anywhere             anywhere            state NEW udp dpt:ntp
+REJECT     all  --  anywhere             anywhere            reject-with icmp-host-prohibited
+（略）</span></code></pre></section><section class="level3" aria-labelledby="ntpクライアントのntpサービスを使ってntpサーバと時刻を同期する"><h3 id="ntpクライアントのntpサービスを使ってntpサーバと時刻を同期する">NTPクライアントのNTPサービスを使ってNTPサーバと時刻を同期する</h3><p>クライアントのNTPサービスは、/etc/ntp.confにserver設定で指定されたNTPサーバと時刻同期を行います。</p><p>クライアントで、デフォルトで設定されているpool.ntp.orgのserver設定をコメントアウトし、構築したNTPサーバ（192.168.0.10）と時刻を同期するように設定します。</p><p>クライアントにNTPサービスがインストールされていない場合には、yumコマンドでインストールします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token info punctuation"><span class="token user">[root@client ~]</span></span><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum <span class="token function">install</span> ntp</span></span>
+<span class="token command"><span class="token info punctuation"><span class="token user">[root@client ~]</span></span><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">vi</span> /etc/ntp.conf</span></span>
+
+<span class="token output">※#※server 0.centos.pool.ntp.org iburst ※←行頭でコメントアウト
+※#※server 1.centos.pool.ntp.org iburst ※←行頭でコメントアウト
+※#※server 2.centos.pool.ntp.org iburst ※←行頭でコメントアウト
+※#※server 3.centos.pool.ntp.org iburst ※←行頭でコメントアウト
+※server 192.168.0.10 iburst ←この行を追加</span></code></pre><p>クライアントのNTPサービスを再起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> ntpd restart</span></span>
+<span class="token output">ntpd を停止中:                                             [  OK  ]
+ntpd を起動中:                                             [  OK  ]</span></code></pre><p>ntpqコマンドで、時刻同期の状態を確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token info punctuation"><span class="token user">[root@client ~]</span></span><span class="token shell-symbol important">#</span> <span class="token bash language-bash">ntpq -p</span></span>
+<span class="token output">     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+*server          157.7.154.29     3 u    2   64    1    0.152    0.108   0.007</span></code></pre></section></section></section>
+</body>
+</html>

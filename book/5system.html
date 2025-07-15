@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>システムのメンテナンス</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+<section class="level1" aria-labelledby="システムのメンテナンス"><h1 id="システムのメンテナンス">システムのメンテナンス</h1><section class="level2" aria-labelledby="パッケージ管理"><h2 id="パッケージ管理">パッケージ管理</h2><p>Linuxの各ディストリビューションでは、Linuxカーネルやアプリケーションなどシステムに必要なソフトウェアをパッケージ形式でインストール、管理する仕組みを持っています。<br>
+パッケージは、たとえばLinuxカーネルであればカーネル本体およびカーネルモジュールを1つのパッケージファイルにまとめたものです。</p><p>Red Hat Enterprise LinuxやCentOS、SUSE Linuxなどでは、パッケージ管理にRPM(Red Hat Package Manager)が採用されています。また、アップデート時のバージョン管理等を行う為に開発されたYum（Yellowdog Updater Modified）が、システムの更新等で広く使われています。</p><p>Debian GNU/LinuxやUbuntuなどのディストリビューションでは、パッケージ管理にDebianパッケージ（deb形式）が採用されています。パッケージ管理ツールとしてAPT（Advanced Package Tool）が使われています。</p><p>本教科書では、CentOS 6のパッケージ管理ツールであるyumの使用方法について解説します。</p><section class="level3" aria-labelledby="yumとは"><h3 id="yumとは">Yumとは</h3><p>以前はRPMパッケージの管理にはrpmコマンドが使用されていましたが、パッケージ間の依存関係を自動的に解決できなかったため、パッケージのインストールを行う際に管理者が自分で依存関係を確認しながら、手動で必要なパッケージを指定する必要がありました。そのため、依存関係で必要となるパッケージが多数あった場合、インストール作業が大変でした。</p><p>Yumでは、yumコマンドを使ったパッケージのインストール時に依存関係の解決を自動的に行い、必要となるパッケージも同時にインストールするため、パッケージ管理が簡単になっています。</p></section><section class="level3" aria-labelledby="yumの設定"><h3 id="yumの設定">Yumの設定</h3><p>Yumでは、RPMパッケージをまとめて置いておく場所を「リポジトリ」と呼びます。パッケージのインストールの際には、リポジトリから必要なRPMパッケージを取得します。</p><p>リポジトリの設定ファイルは/etc/yum.repos.dディレクトリにあります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ls</span> /etc/yum.repos.d</span></span>
+<span class="token output">CentOS-Base.repo       CentOS-Media.repo  CentOS-fasttrack.repo
+CentOS-Debuginfo.repo  CentOS-Vault.repo</span></code></pre><p>それぞれのリポジトリ設定ファイルに、リポジトリの参照先などが記述されています。</p><p>デフォルトで利用されるCentOS-Base.repoの中身は以下の通りです。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/yum.repos.d/CentOS-Base.repo</span></span>
+<span class="token output">（略）
+[base]
+name=CentOS-$releasever - Base
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&#x26;arch=$basearch&#x26;repo=os&#x26;infra=$infra
+#baseurl=http://mirror.centos.org/centos/$releasever/os/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
+（略）
+
+#additional packages that extend functionality of existing packages
+[centosplus]
+name=CentOS-$releasever - Plus
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&#x26;arch=$basearch&#x26;repo=centosplus&#x26;infra=$infra
+#baseurl=http://mirror.centos.org/centos/$releasever/centosplus/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
+（略）</span></code></pre><p>設定項目mirrorlistで指定したmirror.centos.orgは、リポジトリのミラーリストから返される、ネットワークで接続しやすいリポジトリのアドレスに置き換えられます。</p><p>設定項目enabledの値が0に設定されていると、そのリポジトリはyumコマンドの--enablerepoオプションで指定されなければ参照しません。</p><p>yumコマンドは、インターネットに接続し、HTTPでインストールするパッケージをダウンロードすることができる必要があります。もし、PROXYサーバを経由する必要がある場合には、yumコマンドの設定ファイル/etc/yum.confにPROXYサーバに関する設定を記述する必要があります。設定項目は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>設定する値</th></tr></thead><tbody><tr><td>proxy</td><td>PROXYサーバのURL</td></tr><tr><td>proxy_username</td><td>PROXYサーバの認証ユーザ名</td></tr><tr><td>proxy_password</td><td>PROXYサーバの認証パスワード</td></tr></tbody></table><p>また、インターネットに接続できない場合には、インストール用のDVDメディアをリポジトリとして参照する方法が利用できます。具体的な手順は後述します。</p></section><section class="level3" aria-labelledby="yumコマンドの基本的な使い方"><h3 id="yumコマンドの基本的な使い方">yumコマンドの基本的な使い方</h3><p>yumコマンドは、引数として様々なサブコマンドを指定して使用します。主なサブコマンドは以下の通りです。</p><section class="level4" aria-labelledby="パッケージのインストール"><h4 id="パッケージのインストール">パッケージのインストール</h4><p>指定されたパッケージをインストールします。</p><pre class="language-text"><code class="language-text">yum install パッケージ名</code></pre></section><section class="level4" aria-labelledby="パッケージのアンインストール削除"><h4 id="パッケージのアンインストール削除">パッケージのアンインストール（削除）</h4><p>指定されたパッケージをアンインストール（削除）します。</p><pre class="language-text"><code class="language-text">yum remove パッケージ名</code></pre></section><section class="level4" aria-labelledby="パッケージの更新の確認"><h4 id="パッケージの更新の確認">パッケージの更新の確認</h4><p>インストールされているパッケージの更新があるかを確認します。</p><pre class="language-text"><code class="language-text">yum check-update</code></pre></section><section class="level4" aria-labelledby="パッケージの更新"><h4 id="パッケージの更新">パッケージの更新</h4><p>インストールされているパッケージを更新します。パッケージ名を指定しなかった場合には、すべての更新可能なパッケージが対象となります。</p><pre class="language-text"><code class="language-text">yum update [パッケージ名]</code></pre></section><section class="level4" aria-labelledby="パッケージグループの一覧表示"><h4 id="パッケージグループの一覧表示">パッケージグループの一覧表示</h4><p>利用可能なパッケージグループを表示します。</p><pre class="language-text"><code class="language-text">yum grouplist</code></pre></section><section class="level4" aria-labelledby="パッケージグループのインストール"><h4 id="パッケージグループのインストール">パッケージグループのインストール</h4><p>指定されたパッケージグループに含まれるすべてのパッケージをまとめてインストールします。</p><pre class="language-text"><code class="language-text">yum groupinstall パッケージグループ名</code></pre></section><section class="level4" aria-labelledby="パッケージグループのアンインストール削除"><h4 id="パッケージグループのアンインストール削除">パッケージグループのアンインストール（削除）</h4><p>指定されたパッケージグループに含まれるすべてのパッケージをまとめてアンインストール（削除）します。</p><pre class="language-text"><code class="language-text">yum groupremove パッケージグループ名</code></pre></section></section><section class="level3" aria-labelledby="パッケージグループを指定したインストール"><h3 id="パッケージグループを指定したインストール">パッケージグループを指定したインストール</h3><p>yumコマンドを使ったパッケージのインストールはdumpコマンドのインストールなどで既に行っているので、パッケージグループを指定したインストールを行います。</p><p>以下の例では、高機能なエディタである「Emacs」パッケージグループをインストールします。</p><p>利用可能なパッケージグループを表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum grouplist</span></span>
+<span class="token output">読み込んだプラグイン:fastestmirror, refresh-packagekit, security
+グループ処理の設定をしています
+Loading mirror speeds from cached hostfile
+ * base: ftp.nara.wide.ad.jp
+ * extras: ftp.nara.wide.ad.jp
+ * updates: ftp.nara.wide.ad.jp
+インストール済みグループ:
+   CIFS ファイルサーバー
+   Java プラットフォーム
+（略）
+利用可能なグループ
+   Eclipse
+   ※Emacs
+（略）</span></code></pre><p>「Emacs」パッケージグループをインストールします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum groupinstall Emacs</span></span>
+<span class="token output">読み込んだプラグイン:fastestmirror, refresh-packagekit, security
+グループ処理の設定をしています
+Loading mirror speeds from cached hostfile
+ * base: ftp.riken.jp
+ * extras: ftp.riken.jp
+ * updates: ftp.riken.jp
+依存性の解決をしています
+--> トランザクションの確認を実行しています。
+---> Package emacs.x86_64 1:23.1-25.el6 will be インストール
+--> 依存性の処理をしています: emacs-common = 1:23.1-25.el6 のパッケージ: 1:emacs-23.1-25.el6.x86_64
+（略）
+
+依存性を解決しました
+
+================================================================================
+ パッケージ               アーキテクチャ
+                                        バージョン            リポジトリー
+                                                                           容量
+================================================================================
+インストールしています:
+ emacs                    x86_64        1:23.1-25.el6         base        2.2 M
+依存性関連でのインストールをします。:
+ emacs-common             x86_64        1:23.1-25.el6         base         18 M
+ libXaw                   x86_64        1.0.11-2.el6          base        178 k
+ libXpm                   x86_64        3.5.10-2.el6          base         51 k
+ libotf                   x86_64        0.9.9-3.1.el6         base         80 k
+ m17n-db-datafiles        noarch        1.5.5-1.1.el6         base        717 k
+
+トランザクションの要約
+================================================================================
+インストール         6 パッケージ
+
+総ダウンロード容量: 21 M
+インストール済み容量: 73 M
+これでいいですか? [y/N]※y ←yを入力
+パッケージをダウンロードしています:
+(1/6): emacs-23.1-25.el6.x86_64.rpm                      | 2.2 MB     00:00
+（略）
+
+インストール:
+  emacs.x86_64 1:23.1-25.el6
+
+依存性関連をインストールしました:
+  emacs-common.x86_64 1:23.1-25.el6            libXaw.x86_64 0:1.0.11-2.el6
+  libXpm.x86_64 0:3.5.10-2.el6                 libotf.x86_64 0:0.9.9-3.1.el6
+  m17n-db-datafiles.noarch 0:1.5.5-1.1.el6
+
+完了しました!</span></code></pre><p>Emacsを起動します</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">emacs</span></span></code></pre><p>Emacsを終了します。Ctrl+Xキーを押した後、Ctrl+Cキーを押します。</p></section><section class="level3" aria-labelledby="パッケージグループ名を英語表記で表示する"><h3 id="パッケージグループ名を英語表記で表示する">パッケージグループ名を英語表記で表示する</h3><p>yumコマンドはロケール（Locale）に対応しているため、環境変数LANGの値が日本語に設定されているとパッケージグループ名が日本語で表示されます。このため、yum groupinstallコマンドを実行する際に日本語でパッケージグループ名を指定しなければなりません。</p><p>日本語がうまく表示できない、あるいは日本語が入力できない環境の場合、yumコマンドの前に「LANG=C」と入力することでパッケージグループ名を英語表記で表示できます。この方法は環境変数LANGの値を一時的に変更した状態で、yumコマンドを実行したことになります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token assign-left variable"><span class="token environment constant">LANG</span></span><span class="token operator">=</span>C yum grouplist</span></span>
+<span class="token output">（略）
+Installed Groups:
+   Additional Development
+   Base
+   CIFS file server
+（略）</span></code></pre><p>インストール時には、ローケルを指定しないでも英語表記のままパッケージグループ名を指定できます。パッケージグループ名に空白が含まれている場合には「"」（ダブルクォート）でパッケージグループ名を括って下さい。</p><p>以下の例では、開発ツール（Development tools）パッケージグループを指定して、コンパイラなどをインストールしています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum groupinstall <span class="token string">"Development tools"</span></span></span></code></pre></section><section class="level3" aria-labelledby="インストールdvdメディアをリポジトリにする方法"><h3 id="インストールdvdメディアをリポジトリにする方法">インストールDVDメディアをリポジトリにする方法</h3><p>インターネットに接続できない環境でyumコマンドを利用する方法として、インストールDVDメディアをリポジトリとして参照させる方法があります。</p><p>設定ファイル/etc/yum.repos.d/CentOS-Media.repoが用意されており、以下のように設定が記述されています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/yum.repos.d/CentOS-Media.repo</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">CentOS-Media.repo</span></span>
+<span class="token output">#
+</span><span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash">This repo can be used with mounted DVD media, verify the <span class="token function">mount</span> point <span class="token keyword">for</span></span></span>
+<span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash">CentOS-6.  You can use this repo and yum to <span class="token function">install</span> items directly off the</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash">DVD ISO that we release.</span></span>
+<span class="token output">#
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">To use this repo, put <span class="token keyword">in</span> your DVD and use it with the other repos too:</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash">yum --enablerepo<span class="token operator">=</span>c6-media <span class="token punctuation">[</span>command<span class="token punctuation">]</span></span></span>
+<span class="token output">#
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">or <span class="token keyword">for</span> ONLY the media repo, <span class="token keyword">do</span> this:</span></span>
+<span class="token output">#
+</span><span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash">yum --disablerepo<span class="token operator">=</span><span class="token punctuation">\</span>* --enablerepo<span class="token operator">=</span>c6-media <span class="token punctuation">[</span>command<span class="token punctuation">]</span></span></span>
+
+<span class="token output">[c6-media]
+name=CentOS-$releasever - Media
+baseurl=file:///media/CentOS/
+        file:///media/cdrom/
+        file:///media/cdrecorder/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6</span></code></pre><p>この設定を利用するには、インストールDVDメディアを/media/CentOSディレクトリにマウントし、yumコマンドにリポジトリ指定のオプションをつけて実行する必要があります。</p><p>以下の手順で、インストールDVDメディアをリポジトリとして参照できるようにします。</p><ol>
+<li>CentOSにユーザrootとしてグラフィカルログインします。</li>
+<li>インストールDVDメディアをDVDドライブに挿入します。仮想マシンの場合には、インストールISOイメージファイルを仮想DVDドライブで参照します。</li>
+<li>自動マウントされることを確認します。</li>
+<li>mountコマンドで確認します。インストールDVDメディアは/media/CentOS_6.6_Finalにマウントされています。</li>
+</ol><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">mount</span></span></span>
+<span class="token output">（略）
+/dev/sr0 on /media/CentOS_6.6_Final type iso9660 (ro,nosuid,nodev,uhelper=udisks,uid=0,gid=0,iocharset=utf8,mode=0400,dmode=0500)</span></code></pre><p>＃5</p><ol>
+<li>シンボリックリンク/media/CentOSを作成します。</li>
+</ol><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ln</span> -s /media/CentOS_6.6_Final/ /media/CentOS</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ls</span> -l /media</span></span>
+<span class="token output">合計 4
+lrwxrwxrwx. 1 root root   24  1月 15 02:47 2015 CentOS -> /media/CentOS_6.6_Final/
+dr-xr-xr-x. 7 root root 4096 10月 24 23:17 2014 CentOS_6.6_Final</span></code></pre><p>＃６</p><ol>
+<li>yumコマンドを実行します。--disablerepoオプションですべてのリポジトリを参照不要とし、--enablerepoオプションでc6-mediaリポジトリのみ参照するように指定します。以下の例では、グループリストを取得しています。</li>
+</ol><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum --disablerepo<span class="token operator">=</span><span class="token punctuation">\</span>* --enablerepo<span class="token operator">=</span>c6-media grouplist</span></span></code></pre></section></section><section class="level2" aria-labelledby="システム監視"><h2 id="システム監視">システム監視</h2><p>システムを適切に運用していく上で、システム上のリソースが常に有効に使われているか、極端にリソースを占有しているプロセスは無いかを監視することは重要な事です。</p><p>システム上のリソースを様々な角度で監視する方法を解説します。</p><section class="level3" aria-labelledby="stressコマンドのインストール"><h3 id="stressコマンドのインストール">stressコマンドのインストール</h3><p>システムに負荷をかけるために、stressコマンドを使用します。stressコマンドは、CentOS 6の標準パッケージでは提供されておらず、RPMforgeのリポジトリで提供されています。リポジトリを追加してyumコマンドでインストールします。</p><p>RPMforgeのリポジトリを追加するには、下記のサイトから、ディストリビューションに対応した最新のrpmforge-releaseパッケージをダウンロードします。</p><pre class="language-text"><code class="language-text">http://pkgs.repoforge.org/rpmforge-release/</code></pre><p>64ビット版CentOS 6の場合、以下のパッケージとなります。パッケージがバージョンアップするとファイル名が変わるので注意が必要です。</p><pre class="language-text"><code class="language-text">http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm</code></pre><p>コマンドラインでの作業を行っている場合、wgetコマンドを使ってダウンロードします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">wget</span> http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm</span></span>
+<span class="token output">（略）
+
+2014-12-24 11:19:30 (19.2 KB/s) - `rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm' へ保存完了 [12640/12640]</span></code></pre><p>rpmコマンドでrpmforge-releaseパッケージをインストールします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ls</span> -l rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm</span></span>
+<span class="token output">-rw-r--r--. 1 root root 12640  3月 21 00:59 2013 rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">rpm</span> -ivh rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm</span></span></code></pre><p>yumコマンドでstressパッケージをインストールします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum <span class="token function">install</span> stress</span></span></code></pre><section class="level4" aria-labelledby="rpmパッケージの直接取得"><h4 id="rpmパッケージの直接取得">RPMパッケージの直接取得</h4><p>インターネットに接続できない場合には、インターネットに接続できる端末で以下のURLからRPMパッケージをダウンロードしてコピーして下さい。</p><pre class="language-text"><code class="language-text">http://pkgs.repoforge.org/stress/
+http://pkgs.repoforge.org/stress/stress-1.0.2-1.el6.rf.x86_64.rpm</code></pre></section></section><section class="level3" aria-labelledby="topコマンドによるシステムリソース監視"><h3 id="topコマンドによるシステムリソース監視">topコマンドによるシステムリソース監視</h3><p>topコマンドは、システムのどのプロセスがどの程度のCPUやメモリなどのリソースを消費しているかを簡単に示してくれる対話型のコマンドです。</p><p>topコマンドを実行すると、デフォルトでは先頭五行（サマリーエリア）にシステム全体の情報が表示されます。次の行が対話的にコマンドを入力するエリアです。その次の行から、プロセス毎の情報が表示されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token output">top - 03:11:49 up 16:28,  4 users,  load average: 0.08, 0.03, 0.01
+Tasks: 188 total,   1 running, 187 sleeping,   0 stopped,   0 zombie
+Cpu(s):  0.0%us,  0.0%sy,  0.0%ni, 99.8%id,  0.2%wa,  0.0%hi,  0.0%si,  0.0%st
+Mem:   1016372k total,   811796k used,   204576k free,    24736k buffers
+Swap:  2064380k total,    41640k used,  2022740k free,   295652k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+    1 root      20   0 19364 1304 1036 S  0.0  0.1   0:01.24 init
+    2 root      20   0     0    0    0 S  0.0  0.0   0:00.03 kthreadd
+    3 root      RT   0     0    0    0 S  0.0  0.0   0:00.03 migration/0
+    4 root      20   0     0    0    0 S  0.0  0.0   0:00.09 ksoftirqd/0
+    5 root      RT   0     0    0    0 S  0.0  0.0   0:00.00 stopper/0
+    6 root      RT   0     0    0    0 S  0.0  0.0   0:00.08 watchdog/0
+    7 root      RT   0     0    0    0 S  0.0  0.0   0:00.04 migration/1
+    8 root      RT   0     0    0    0 S  0.0  0.0   0:00.00 stopper/1
+    9 root      20   0     0    0    0 S  0.0  0.0   0:00.07 ksoftirqd/1
+   10 root      RT   0     0    0    0 S  0.0  0.0   0:00.06 watchdog/1
+   11 root      20   0     0    0    0 S  0.0  0.0   0:03.16 events/0
+   12 root      20   0     0    0    0 S  0.0  0.0   0:02.79 events/1
+   13 root      20   0     0    0    0 S  0.0  0.0   0:00.00 cgroup
+   14 root      20   0     0    0    0 S  0.0  0.0   0:00.01 khelper
+   15 root      20   0     0    0    0 S  0.0  0.0   0:00.00 netns
+   16 root      20   0     0    0    0 S  0.0  0.0   0:00.00 async/mgr
+   17 root      20   0     0    0    0 S  0.0  0.0   0:00.00 pm</span></code></pre><p>先頭の5行には、以下の情報が表示されています。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>行数</th><th>意味</th></tr></thead><tbody><tr><td>1行目</td><td>起動時間、ログインユーザ数、ロードアベレージ</td></tr><tr><td>2行目</td><td>各状態のタスク数</td></tr><tr><td>3行目</td><td>CPUの使用状況</td></tr><tr><td>4行目</td><td>物理メモリの使用状況</td></tr><tr><td>5行目</td><td>スワップ領域の使用状況</td></tr></tbody></table><p>stressコマンドを実行して、システムに負荷をかけた状態をtopコマンドで確認します。</p><p>stressコマンドをバックグラウンドで実行します。バックグラウンド実行を行った関係上、コマンドプロンプトが表示された後にstressコマンドのメッセージが表示されます。Enterキーを押せば、再度コマンドプロンプトが表示されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">stress --cpu <span class="token number">3</span> --io <span class="token number">4</span> --vm <span class="token number">2</span> --vm-bytes 128M <span class="token operator">&#x26;</span></span></span>
+<span class="token output">[1] 9747
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">stress: info: <span class="token punctuation">[</span><span class="token number">9747</span><span class="token punctuation">]</span> dispatching hogs: <span class="token number">3</span> cpu, <span class="token number">4</span> io, <span class="token number">2</span> vm, <span class="token number">0</span> hdd</span></span>
+<span class="token output">※Enterキーを入力
+#</span></code></pre><p>topコマンドでプロセスの状況を確認します。stressコマンドがCPU、メモリを使用している様子が確認できます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">top</span></span></span>
+
+<span class="token output">top - 03:28:09 up 16:44,  3 users,  load average: 16.85, 14.44, 7.86
+Tasks: 208 total,  13 running, 195 sleeping,   0 stopped,   0 zombie
+Cpu(s): 55.5%us, 44.5%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
+Mem:   1016372k total,   718440k used,   297932k free,     1528k buffers
+Swap:  2064380k total,   116124k used,  1948256k free,    39532k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+ 9692 sato      20   0  6516  176   92 R 17.0  0.0   2:02.20 stress
+ 9698 sato      20   0  6516  176   92 R 17.0  0.0   2:03.52 stress
+ 9748 root      20   0  6516  188  104 R 17.0  0.0   0:04.95 stress
+ 9750 root      20   0  134m 125m  184 R 17.0 12.6   0:05.11 stress
+ 9754 root      20   0  6516  188  104 R 17.0  0.0   0:05.11 stress
+ 9694 sato      20   0  134m  24m  168 R 16.6  2.4   2:00.22 stress
+ 9695 sato      20   0  6516  176   92 R 16.6  0.0   2:02.48 stress
+ 9751 root      20   0  6516  188  104 R 16.6  0.0   0:04.88 stress
+ 9697 sato      20   0  134m  59m  168 R 16.3  6.0   2:00.31 stress
+ 9753 root      20   0  134m  55m  184 R 16.3  5.6   0:04.87 stress
+ 9755 root      20   0  6516  184  100 D  4.7  0.0   0:01.50 stress
+ 9756 root      20   0  6516  184  100 D  4.7  0.0   0:01.49 stress
+ 9696 sato      20   0  6516  172   88 R  4.0  0.0   0:54.59 stress
+ 9699 sato      20   0  6516  172   88 D  4.0  0.0   0:59.14 stress
+ 9693 sato      20   0  6516  172   88 D  2.0  0.0   0:57.48 stress
+ 9700 sato      20   0  6516  172   88 D  2.0  0.0   0:59.43 stress
+ 9749 root      20   0  6516  184  100 D  2.0  0.0   0:01.60 stress</span></code></pre><p>qキーを押して、topコマンドを終了します。バックグラウンドで動作しているstressコマンドもfgコマンドでフォアグラウンド実行に変更して、終了します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">fg</span></span></span>
+<span class="token output">stress --cpu 3 --io 4 --vm 2 --vm-bytes 128M
+※^C ←Ctrl+Cキーを入力</span></code></pre></section><section class="level3" aria-labelledby="vmstatコマンドによるシステムリソース監視"><h3 id="vmstatコマンドによるシステムリソース監視">vmstatコマンドによるシステムリソース監視</h3><p>vmstatコマンドは、メモリの使用状況やCPUの負荷などを表示するコマンドです。</p><p>vmstatコマンドを引数無しで実行すると、コマンドを実行した時点のメモリやCPU、ディスクの使用状況が表示されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">vmstat</span></span></span>
+<span class="token output">procs -----------memory---------- ---swap-- -----io---- --system-- -----cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 8  0 116104 408536  58692  71292    0    1    10    11  251   66  2  2 97  0  0</span></code></pre><p>表示される内容は以下の表のとおりです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td>r</td><td>実行待ちプロセス数</td></tr><tr><td>b</td><td>割り込み不可のスリープ状態にあるプロセス数</td></tr><tr><td>swpd</td><td>スワップアウトされたメモリ量</td></tr><tr><td>free</td><td>空きメモリの容量</td></tr><tr><td>buff</td><td>バッファに使用されているメモリの容量</td></tr><tr><td>cache</td><td>キャッシュに使用されているメモリの容量</td></tr><tr><td>si</td><td>1秒あたりのディスクからスワップインされているメモリの容量</td></tr><tr><td>so</td><td>1秒あたりのディスクにスワップアウトされているメモリの容量</td></tr><tr><td>bi</td><td>1秒あたりのブロックデバイスに送られたブロック</td></tr><tr><td>bo</td><td>1秒あたりのブロックデバイスから受け取ったブロック</td></tr><tr><td>in</td><td>1秒あたりの割り込みの回数</td></tr><tr><td>cs</td><td>1秒あたりのコンテキストスイッチの回数</td></tr><tr><td>us</td><td>CPU総時間当たりのユーザー時間の割合</td></tr><tr><td>sy</td><td>CPU総時間当たりのシステム時間の割合</td></tr><tr><td>id</td><td>CPU総時間当たりのアイドル時間の割合</td></tr></tbody></table><p>vmstatコマンドに引数として数値を与えると、秒間隔でシステムのリソース情報を出力し続けます。終了するにはCtrl+Cキーを入力します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">vmstat</span> <span class="token number">5</span></span></span>
+<span class="token output">procs -----------memory---------- ---swap-- -----io---- --system-- -----cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+10  0 116104 261708  65040  79460    0    1    11    11  253   70  2  2 97  0  0
+ 9  0 116104 358068  65712  80356    0    0   189   242 5411 8564 42 58  0  0  0
+ 7  0 116104 301924  66184  81372    0    0   202   308 4610 7441 41 59  0  0  0
+※^C Ctrl+Cキーを入力する</span></code></pre></section><section class="level3" aria-labelledby="sysstatによるシステムリソース監視"><h3 id="sysstatによるシステムリソース監視">sysstatによるシステムリソース監視</h3><p>稼働中のLinuxのシステム情報を継続して集めるには、sysstatパッケージに含まれているiostatコマンドやsarコマンドなどを使うと便利です。</p><p>sysstatパッケージをインストールします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum <span class="token function">install</span> sysstat</span></span></code></pre><p>sysstatパッケージをインストールすると、デフォルトで10分間隔でシステムのリソース情報が取得されるようにcronが設定されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/cron.d/sysstat</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Run system activity accounting tool every <span class="token number">10</span> minutes</span></span>
+<span class="token output">*/10 * * * * root /usr/lib64/sa/sa1 1 1
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token number">0</span> * * * * root /usr/lib64/sa/sa1 <span class="token number">600</span> <span class="token number">6</span> <span class="token operator">&#x26;</span></span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Generate a daily summary of process accounting at <span class="token number">23</span>:53</span></span>
+<span class="token output">53 23 * * * root /usr/lib64/sa/sa2 -A</span></code></pre><p>10分間隔で起動される/usr/lib64/sa/sa1スクリプトは、内部で/usr/lib64/sa/sadcを実行し、システムのリソース情報を取得して/var/log/sa/saDDファイル（DDは2桁の日付）に保存しています。<br>
+23:53に実行される/usr/lib64/sa/sa2スクリプトは、sa1スクリプトで取得した情報をまとめて/var/log/sa/sarDD（DDは2桁の日付）というファイルを生成し、古くなった情報を削除します。デフォルトでは28日分を保存しておきます。期間を変更したい場合には設定ファイル/etc/sysconfig/sysstatファイル内のHISTORY変数を変更します。</p><p>まとめられた情報は、後述するsarコマンドで参照できます。</p></section><section class="level3" aria-labelledby="iostatコマンドによるシステムリソース監視"><h3 id="iostatコマンドによるシステムリソース監視">iostatコマンドによるシステムリソース監視</h3><p>sysstatパッケージに含まれるiostatコマンドは、CPUの使用率や各種I/Oの利用状況を確認するためのコマンドです。I/Oは、ハードディスクやテープドライブ、ネットワークマウントしたファイルシステム、端末入出力等の入出力性能を監視できます。</p><p>iostatコマンドを実行すると、システムが起動してからiostatコマンドを実行した時点までの間のCPUおよびI/Oの状況が表示されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iostat</span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月15日  _x86_64(2 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           1.72    0.00    1.95    0.03    0.00   96.30
+
+Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
+sda               1.89        44.06       117.04    2720068    7224884
+scd0              0.01         0.18         0.00      11204          0
+dm-0              6.51        41.98        42.57    2591466    2627904
+dm-1              0.49         0.17        74.44      10552    4595040
+dm-2              0.01         0.06         0.03       3522       1856</span></code></pre><p>表示される内容は以下の表のとおりです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td>%user</td><td>ユーザプロセスによるCPUの使用率</td></tr><tr><td>%nice</td><td>実行優先度（nice値）を変更したユーザプロセスによるCPUの使用率</td></tr><tr><td>%system</td><td>システムプロセスによるCPUの使用率</td></tr><tr><td>%iowait</td><td>I/O終了待ちとなったCPUの使用率</td></tr><tr><td>%steal</td><td>ハイパーバイザーによる他の仮想CPUの実行待ちとなったCPUの使用率</td></tr><tr><td>%idle</td><td>CPUが何も処理をせずに待機していた時間の割合(ディスクI/O以外）</td></tr><tr><td>tps</td><td>1秒間のI/O転送回数</td></tr><tr><td>Blk_read/s</td><td>1秒間のディスクの読み込み量(ブロック数)</td></tr><tr><td>Blk_wrtn/s</td><td>1秒間のディスクの書き込み量(ブロック数)</td></tr><tr><td>Blk_read</td><td>ディスクの読み込み量(ブロック数)</td></tr><tr><td>Blk_wrtn</td><td>ディスクの書き込み量(ブロック数)</td></tr></tbody></table><p>iostatコマンドに-xオプションを付与して実行すると、表示がKB単位に変わります。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td>kB_read/s</td><td>1秒間のディスクの読み込み量(KB単位)</td></tr><tr><td>kB_wrtn/s</td><td>1秒間のディスクの書き込み量(KB単位)</td></tr><tr><td>kB_read</td><td>ディスクの読み込み量(KB単位)</td></tr><tr><td>kB_wrtn</td><td>ディスクの書き込み量(KB単位)</td></tr></tbody></table><p>iostatコマンドに引数として数値を与えて実行すると、1回目の表示はシステム起動からiostatコマンド実行時までの間の情報ですが、その後指定された秒間隔で全てのデバイスのI/Oの利用状況が出力されます。終了するにはCtrl+Cを入力します。。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iostat <span class="token number">5</span></span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月15日  _x86_64(2 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           1.76    0.00    2.01    0.03    0.00   96.20
+
+Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
+sda               1.89        44.02       116.93    2720092    7225892
+scd0              0.01         0.18         0.00      11204          0
+dm-0              6.51        41.94        42.54    2591474    2628888
+dm-1              0.49         0.17        74.36      10552    4595040
+dm-2              0.01         0.06         0.03       3522       1856
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+          44.30    0.00   55.70    0.00    0.00    0.00
+
+Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
+sda               0.00         0.00         0.00          0          0
+scd0              0.00         0.00         0.00          0          0
+dm-0              0.00         0.00         0.00          0          0
+dm-1              0.00         0.00         0.00          0          0
+dm-2              0.00         0.00         0.00          0          0
+
+※^C ←Ctrl+Cキーを入力する</span></code></pre><p>iostatコマンドに-xオプションを付与して実行します。結果が拡張フォーマットで表示されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iostat -x</span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月15日  _x86_64(2 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           1.78    0.00    2.04    0.03    0.00   96.16
+
+Device:         rrqm/s   wrqm/s     r/s     w/s   rsec/s   wsec/s avgrq-sz avgqu-sz   await  svctm  %util
+sda               0.83     4.90    0.83    1.06    44.00   116.88    85.16     0.00    0.57   0.30   0.06
+scd0              0.04     0.00    0.01    0.00     0.18     0.00    27.00     0.00   14.24   9.61   0.01
+dm-0              0.00     0.00    1.17    5.33    41.92    42.52    12.98     0.02    3.17   0.10   0.06
+dm-1              0.00     0.00    0.02    0.47     0.17    74.33   150.83     0.00    1.80   0.03   0.00
+dm-2              0.00     0.00    0.01    0.00     0.06     0.03     7.97     0.00    0.37   0.27   0.00</span></code></pre><p>表示される内容は以下の表のとおりです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td>rrqm/s</td><td>1秒間デバイスへマージされた読み込みリクエスト数</td></tr><tr><td>wrqm/s</td><td>1秒間デバイスへマージされた書き込みリクエスト数</td></tr><tr><td>r/s</td><td>1秒間の読み込みリクエスト数</td></tr><tr><td>w/s</td><td>1秒間の書き込みリクエスト数</td></tr><tr><td>rsec/s</td><td>1秒間の読み込みセクタ数</td></tr><tr><td>wsec/s</td><td>1秒間の書き込みセクタ数</td></tr><tr><td>rkB/s</td><td>1秒間の読み込みキロバイト（KB）数</td></tr><tr><td>wkB/s</td><td>1秒間の読み込みキロバイト（KB）数</td></tr><tr><td>avgrq-sz</td><td>デバイスへのIOリクエストの平均サイズ</td></tr><tr><td>avgqu-sz</td><td>デバイスへのIOリクエストのキューの平均サイズ</td></tr><tr><td>await</td><td>デバイスへのIOリクエストの平均待ち時間</td></tr><tr><td>svctm</td><td>デバイスへのIOリクエストの平均処理時間</td></tr><tr><td>%util</td><td>デバイスへのIOリクエスト期間CPUの使用率</td></tr></tbody></table></section><section class="level3" aria-labelledby="sarsystem-admin-reporterによるシステムリソース監視"><h3 id="sarsystem-admin-reporterによるシステムリソース監視">sar（System Admin Reporter）によるシステムリソース監視</h3><p>sarコマンドはCPUやネットワーク、メモリ、ディスクなどのシステム情報を確認・出力するためのコマンドです。sarコマンドで様々なシステム情報を取得、出力できるので、障害発生時の障害を特定するために利用されます。</p><p>また、オプションでファイルを指定することにより、過去に取得しているsarやsadcのバイナリ出力ファイルから利用状況を抜き出すことができます。sysstatパッケージをインストールした際に設定されたcronによる情報収集の結果も、sarコマンドで確認できます。</p><p>sarコマンドに引数を与えて実行します。例では1秒間隔で3回、CPUの情報を監視します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">sar <span class="token number">1</span> <span class="token number">3</span></span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月23日  _x86_64(2 CPU)
+
+18時25分47秒     CPU     %user     %nice   %system   %iowait    %steal     %idle
+18時25分48秒     all     38.00      0.00     62.00      0.00      0.00      0.00
+18時25分49秒     all     38.50      0.00     61.50      0.00      0.00      0.00
+18時25分50秒     all     39.80      0.00     60.20      0.00      0.00      0.00
+平均値:      all     38.77      0.00     61.23      0.00      0.00      0.00</span></code></pre><p>sarコマンドを-bオプションを付与して実行します。ディスクI/Oの利用状況を監視します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">sar -b <span class="token number">1</span> <span class="token number">3</span></span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月23日  _x86_64(2 CPU)
+
+18時26分15秒       tps      rtps      wtps   bread/s   bwrtn/s
+18時26分16秒      0.00      0.00      0.00      0.00      0.00
+18時26分17秒      0.00      0.00      0.00      0.00      0.00
+18時26分18秒    352.00    142.00    210.00   5648.00   1904.00
+平均値:     117.73     47.49     70.23   1888.96    636.79</span></code></pre><p>sarコマンドを-rオプションを付与して実行します。メモリやスワップの利用状況を監視します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">sar -r <span class="token number">1</span> <span class="token number">3</span></span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月23日  _x86_64(2 CPU)
+
+18時26分32秒 kbmemfree kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit
+18時26分33秒    233684    782688     77.01     81008    152872   1562412     50.72
+18時26分34秒    101404    914968     90.02     81008    152872   1562412     50.72
+18時26分35秒    112552    903820     88.93     81008    152872   1562412     50.72
+平均値:     149213    867159     85.32     81008    152872   1562412     50.72</span></code></pre><p>sarコマンドを引数無しで実行すると、その日に実行されたsysstatの結果が表示されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">sar</span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月23日  _x86_64(2 CPU)
+
+11時10分01秒     CPU     %user     %nice   %system   %iowait    %steal     %idle
+11時20分01秒     all      0.39      0.00      0.36      0.01      0.00     99.24
+11時30分02秒     all      9.34      0.00     12.22      0.04      0.00     78.39
+11時40分01秒     all     43.10      0.00     56.90      0.00      0.00      0.00
+（略）</span></code></pre><p>sarコマンドに-fオプションを付与して実行します。オプションの値として/var/log/sa/saDDファイルを指定します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">sar -f /var/log/sa/sa22</span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015年01月22日  _x86_64(2 CPU)
+
+12時10分02秒     CPU     %user     %nice   %system   %iowait    %steal     %idle
+12時20分01秒     all      0.33      0.00      0.34      0.01      0.00     99.32
+12時30分01秒     all      0.39      0.00      0.34      0.02      0.00     99.25
+平均値:      all      0.36      0.00      0.34      0.01      0.00     99.29
+（略）</span></code></pre><p>/var/log/sa/sarDDファイルは1日の監視結果を集計したテキストファイルです。lessコマンドなどで参照できます。ただし、毎日23時53分にシステムが動作していないとsarDDファイルは作成されません。その場合には、rootユーザで以下のコマンドを実行するとその日のsarDDファイルが作成されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">/usr/lib64/sa/sa2 -A</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /var/log/sa/sar24</span></span>
+<span class="token output">Linux 2.6.32-504.el6.x86_64 (server.example.com)  2015-01-23  _x86_64(2 CPU)
+
+11時10分01秒     CPU      %usr     %nice      %sys   %iowait    %steal      %irq     %soft    %guest     %idle
+11時20分01秒     all      0.39      0.00      0.35      0.01      0.00      0.00      0.01      0.00     99.24
+11時20分01秒       0      0.44      0.00      0.36      0.02      0.00      0.00      0.02      0.00     99.17
+（略）</span></code></pre></section><section class="level3" aria-labelledby="logwatchによるメール通知"><h3 id="logwatchによるメール通知">logwatchによるメール通知</h3><p>サーバに出力されたログには、問題が発生した兆候がログとして出力されるものがあります。また、セキュリティ上、不正なアクセスなどもログに記録されます。</p><p>logwatchは、サーバのログを見やすいレポートにまとめて毎日メールで送信したり、特定のパターンが含まれるログが出た際にメールで通知を出すように設定できます。これにより、ログのチェックを簡略化することができます。</p><p>logwatchをインストールします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum <span class="token function">install</span> logwatch</span></span></code></pre><p>logwatchを設定します。logwatch.confのデフォルト設定は/usr/share/logwatch/default.conf/logwatch.confに記述されています。このデフォルト設定から値を変更したいものを/etc/logwatch/conf/logwatch.confに記述します。</p><p>設定できる値は以下の表のとおりです。</p><section class="level4" aria-labelledby="logdir"><h4 id="logdir">LogDir</h4><p>チェックするログの格納先を指定</p></section><section class="level4" aria-labelledby="tmpdir"><h4 id="tmpdir">TmpDir</h4><p>一時的なファイルの保存先</p></section><section class="level4" aria-labelledby="mailto"><h4 id="mailto">MailTo</h4><p>結果レポートのメール送信先を指定</p></section><section class="level4" aria-labelledby="mailfrom"><h4 id="mailfrom">MailFrom</h4><p>結果レポートのメール送信元を指定</p></section><section class="level4" aria-labelledby="print"><h4 id="print">Print</h4><p>結果を標準出力（STDOUT）に出力（Yes）、あるいはMailTo宛にメール送信（No）</p></section><section class="level4" aria-labelledby="save"><h4 id="save">Save</h4><p>結果レポートをファイルとして保存<br>
+標準では無効（コメントアウト）：保存しない</p></section><section class="level4" aria-labelledby="archives"><h4 id="archives">Archives</h4><p>アーカイブされたファイルも調査（Yes）<br>
+標準では無効（コメントアウト）：調査しない</p></section><section class="level4" aria-labelledby="range"><h4 id="range">Range</h4><p>チェック対象となるログファイルの日付範囲を指定<br>
+すべて（All）、当日（Today）、昨日（Yesterday）</p></section><section class="level4" aria-labelledby="detail"><h4 id="detail">Detail</h4><p>結果レポートの詳細レベル<br>
+Low（0）、Med（5）、High（10）のいずれかを指定</p></section><section class="level4" aria-labelledby="service"><h4 id="service">Service</h4><p>LogWatchでチェックの対象となるサービスを指定<br>
+/usr/share/logwatch/scripts/services以下のファイルが対象</p></section><section class="level4" aria-labelledby="logfile"><h4 id="logfile">LogFile</h4><p>特定のログファイルのみをチェック<br>
+標準では無効（コメントアウト）：すべてチェック</p></section><section class="level4" aria-labelledby="mailer"><h4 id="mailer">mailer</h4><p>メール送信で用いるメールプログラムを指定</p></section><section class="level4" aria-labelledby="hostlimit"><h4 id="hostlimit">HostLimit</h4><p>特定のホスト名（hostnameコマンドの結果）に関するログエントリのみチェック<br>
+標準では無効（コメントアウト）：制限しない</p><p>一般的には、MailTo、Detailなどを変更します。デフォルトの設定ファイルをコピーして、必要な設定を変更するとよいでしょう。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cp</span> /usr/share/logwatch/default.conf/logwatch.conf /etc/logwatch/conf/logwatch.conf</span></span>
+<span class="token output">cp: `/etc/logwatch/conf/logwatch.conf' を上書きしてもよろしいですか(yes/no)? ※y yを入力</span></code></pre><p>以下はデフォルト値の抜粋です。</p><pre class="language-text"><code class="language-text">MailTo = root
+Range = yesterday
+Detail = Low
+Service = All</code></pre><p>デフォルト設定では、ローカルのユーザroot宛に昨日の結果を最小限でメール送信します。対象となるサービスは/usr/share/logwatch/scripts/servicesディレクトリ内に用意されているサービスです。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ls</span> /usr/share/logwatch/scripts/services</span></span>
+<span class="token output">afpd            eximstats         pam_unix          sendmail-largeboxes
+amavis          extreme-networks  php               shaperd
+arpwatch        fail2ban          pix               slon
+audit           ftpd-messages     pluto             smartd
+automount       ftpd-xferlog      pop3              sonicwall
+autorpm         http              portsentry        sshd
+bfd             identd            postfix           sshd2
+cisco           imapd             pound             stunnel
+clam-update     in.qpopper        proftpd-messages  sudo
+clamav          init              pureftpd          syslogd
+clamav-milter   ipop3d            qmail             tac_acc
+courier         iptables          qmail-pop3d       up2date
+cron            kernel            qmail-pop3ds      vpopmail
+denyhosts       mailscanner       qmail-send        vsftpd
+dhcpd           modprobe          qmail-smtpd       windows
+dnssec          mountd            raid              xntpd
+dovecot         named             resolver          yum
+dpkg            netopia           rt314             zz-disk_space
+emerge          netscreen         samba             zz-fortune
+evtapplication  oidentd           saslauthd         zz-network
+evtsecurity     openvpn           scsi              zz-runtime
+evtsystem       pam               secure            zz-sys
+exim            pam_pwdb          sendmail</span></code></pre><p>/etc/logwatch/conf/logwatch.confの設定を変更して、すべての期間のログファイルをチェックするように記述します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">vi</span> /etc/logwatch/conf/logwatch.conf</span></span>
+
+<span class="token output">※#※Range = yesterday ※←行頭に#を追加
+※Range = All ←新規に追加</span></code></pre><p>logwatchの出力テストを行います。logwatchコマンドに--printオプションを付与して実行すると、結果が標準出力に表示されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">logwatch --print</span></span>
+
+
+<span class="token output"> ################### Logwatch 7.3.6 (05/19/07) ####################
+        Processing Initiated: Tue Jan 27 11:53:04 2015
+        Date Range Processed: all
+      Detail Level of Output: 0
+              Type of Output: unformatted
+           Logfiles for Host: server.example.com
+  ##################################################################
+
+ --------------------- Selinux Audit Begin ------------------------
+
+  Number of audit daemon stops: 1
+
+ ---------------------- Selinux Audit End -------------------------
+（略）
+ --------------------- Disk Space Begin ------------------------
+
+ Filesystem            Size  Used Avail Use% Mounted on
+ /dev/mapper/vg_server-lv_root
+                        50G  3.8G   43G   9% /
+ /dev/sda1             477M   28M  424M   7% /boot
+ /dev/mapper/vg_server-lv_home
+                        12G   31M   11G   1% /home
+
+
+ ---------------------- Disk Space End -------------------------
+
+
+ ###################### Logwatch End #########################
+
+再度、/etc/logwatch/conf/logwatch.confを設定します。今日のログファイルをチェックするように記述します。
+
+```shell-session
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">vi</span> /etc/logwatch/conf/logwatch.conf</span></span>
+
+<span class="token output">Range = Today</span></code></pre><p>再度logwatchコマンドに--printオプションを付与して実行します。結果が短くなったことを確認します。</p></section></section></section></section>
+</body>
+</html>

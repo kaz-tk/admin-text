@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>ネットワークの管理</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+<section class="level1" aria-labelledby="ネットワークの管理"><h1 id="ネットワークの管理">ネットワークの管理</h1><section class="level2" aria-labelledby="ネットワークインターフェイスの設定"><h2 id="ネットワークインターフェイスの設定">ネットワークインターフェイスの設定</h2><p>ネットワークインターフェースには、IPアドレスなどネットワーク通信のための各種設定が必要となります。ネットワーク環境に合わせて設定を変更します。</p><section class="level3" aria-labelledby="ipコマンドを使ったネットワークインターフェースの設定"><h3 id="ipコマンドを使ったネットワークインターフェースの設定">ipコマンドを使ったネットワークインターフェースの設定</h3><p>ipコマンドは、ネットワークインターフェースの状態の確認や設定、ルーティングテーブルの表示や追加、削除、ARPテーブルの確認や削除など、ネットワークにおける操作全般を行うことができます。</p></section><section class="level3" aria-labelledby="ネットワーク設定の確認"><h3 id="ネットワーク設定の確認">ネットワーク設定の確認</h3><p>IPアドレスやMACアドレスの確認にはip address showコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ip</span> address show</span></span>
+<span class="token output">1: lo: &#x3C;LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eth0: &#x3C;BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:1c:42:dc:25:92 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.10/24 brd 192.168.0.255 scope global eth0
+    inet6 fe80::21c:42ff:fedc:2592/64 scope link
+       valid_lft forever preferred_lft forever</span></code></pre></section><section class="level3" aria-labelledby="ルーティングテーブルデフォルトゲートウェイの確認"><h3 id="ルーティングテーブルデフォルトゲートウェイの確認">ルーティングテーブル、デフォルトゲートウェイの確認</h3><p>ルーティングテーブルの確認を行うにはip route showコマンドを実行します。これは従来のrouteコマンドに相当します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ip</span> route show</span></span>
+<span class="token output">192.168.0.0/24 dev eth0  proto kernel  scope link  src 192.168.0.10  metric 1
+default via 192.168.0.1 dev eth0  proto static</span></code></pre><p>defaultになっている行がデフォルトゲートウェイの設定です。この例では、192.168.0.1がネットワークインターフェースeth0から通信する場合のデフォルトゲートウェイとして設定されています。</p></section><section class="level3" aria-labelledby="arpテーブルの確認"><h3 id="arpテーブルの確認">ARPテーブルの確認</h3><p>ARPテーブルの確認を行うにはip neighbor showコマンドを実行します。neighborはneighに省略できます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span>  <span class="token bash language-bash"><span class="token function">ip</span> neigh show</span></span>
+<span class="token output">192.168.0.1 dev eth0 lladdr 00:1c:42:00:00:18 STALE
+192.168.0.2 dev eth0 lladdr 00:1c:42:00:00:08 REACHABLE</span></code></pre></section></section><section class="level2" aria-labelledby="netstatコマンドを使った設定確認"><h2 id="netstatコマンドを使った設定確認">netstatコマンドを使った設定確認</h2><p>※ssコマンドに置き換え<br>
+netstatコマンドはネットワークの各種状態を確認することができます。よく使用するオプションは以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>オプション</th><th>説明</th></tr></thead><tbody><tr><td>-i</td><td>ネットワークインターフェースの統計情報を表示</td></tr><tr><td>-n</td><td>コンピューター名の名前解決をせずにIPアドレスで表示</td></tr><tr><td>-a</td><td>すべての接続を表示</td></tr><tr><td>-l</td><td>リッスンしているポートの統計情報を表示</td></tr><tr><td>-t</td><td>TCPの統計情報を表示</td></tr><tr><td>-u</td><td>UDPの統計情報を表示</td></tr></tbody></table><section class="level3" aria-labelledby="ネットワークインターフェースの統計情報の表示"><h3 id="ネットワークインターフェースの統計情報の表示">ネットワークインターフェースの統計情報の表示</h3><p>netstat -iコマンドは、各ネットワークインターフェースのパケット転送量を分かりやすく表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">netstat</span> -i</span></span>
+<span class="token output">Kernel Interface table
+Iface       MTU Met    RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR Flg
+eth0       1500   0    47780      0      0      0    16784      0      0      0 BMRU
+lo        65536   0     2366      0      0      0     2366      0      0      0 LRU</span></code></pre></section><section class="level3" aria-labelledby="tcp通信の状態の表示"><h3 id="tcp通信の状態の表示">TCP通信の状態の表示</h3><p>すべてのTCP通信の状態を表示したい場合には、netstat -natコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">netstat</span> -nat</span></span>
+<span class="token output">Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State
+tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:37729               0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN
+tcp        0      0 :::22                       :::*                        LISTEN
+tcp        0      0 ::1:631                     :::*                        LISTEN
+tcp        0      0 ::1:25                      :::*                        LISTEN
+tcp        0      0 :::37114                    :::*                        LISTEN
+tcp        0      0 :::111                      :::*                        LISTEN</span></code></pre></section><section class="level3" aria-labelledby="待ち受けtcpポートの表示"><h3 id="待ち受けtcpポートの表示">待ち受けTCPポートの表示</h3><p>待ち受けているすべてのTCPのポートを表示したい場合には、netstat -nltコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">netstat</span> -nlt</span></span>
+<span class="token output">Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State
+tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN
+tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:37729               0.0.0.0:*                   LISTEN
+tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN
+tcp        0      0 :::22                       :::*                        LISTEN
+tcp        0      0 ::1:631                     :::*                        LISTEN
+tcp        0      0 ::1:25                      :::*                        LISTEN
+tcp        0      0 :::37114                    :::*                        LISTEN
+tcp        0      0 :::111                      :::*                        LISTEN</span></code></pre></section><section class="level3" aria-labelledby="待ち受けudpポートの表示"><h3 id="待ち受けudpポートの表示">待ち受けUDPポートの表示</h3><p>待ち受けているすべてのUDPのポートを表示したい場合には、netstat -nluコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">netstat</span> -nlu</span></span>
+<span class="token output">Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State
+udp        0      0 0.0.0.0:68                  0.0.0.0:*
+udp        0      0 127.0.0.1:708               0.0.0.0:*
+udp        0      0 0.0.0.0:111                 0.0.0.0:*
+udp        0      0 0.0.0.0:631                 0.0.0.0:*
+udp        0      0 192.168.0.10:123            0.0.0.0:*
+udp        0      0 127.0.0.1:123               0.0.0.0:*
+udp        0      0 0.0.0.0:123                 0.0.0.0:*
+udp        0      0 0.0.0.0:44415               0.0.0.0:*
+udp        0      0 0.0.0.0:655                 0.0.0.0:*
+udp        0      0 :::111                      :::*
+udp        0      0 fe80::21c:42ff:fedc:2592:123 :::*
+udp        0      0 ::1:123                     :::*
+udp        0      0 :::123                      :::*
+udp        0      0 :::39182                    :::*
+udp        0      0 :::655                      :::*</span></code></pre></section></section><section class="level2" aria-labelledby="ping-コマンドを使用した疎通の確認"><h2 id="ping-コマンドを使用した疎通の確認">ping コマンドを使用した疎通の確認</h2><p>リモートのホストにIPのパケットが到達できるか確認するためにはpingコマンドを実行します。Ctrl+Cを実行するまで無制限に実行されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ping</span> <span class="token number">8.8</span>.8.8</span></span>
+<span class="token output">PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=128 time=6.26 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=128 time=3.28 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=128 time=2.85 ms
+※^C Ctrl+Cキーを入力する
+--- 8.8.8.8 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 62.780/64.980/66.416/1.579 ms</span></code></pre><p>-c オプションで実行回数を指定できます。以下の例では、5回だけ疎通確認を行っています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ping</span> -c <span class="token number">5</span> <span class="token number">8.8</span>.8.8</span></span>
+<span class="token output">PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=128 time=3.39 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=128 time=3.12 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=128 time=3.44 ms
+64 bytes from 8.8.8.8: icmp_seq=4 ttl=128 time=2.85 ms
+64 bytes from 8.8.8.8: icmp_seq=5 ttl=128 time=3.10 ms
+
+--- 8.8.8.8 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4012ms
+rtt min/avg/max/mdev = 2.856/3.185/3.440/0.225 ms</span></code></pre><p>pingコマンドはICMPプロトコルを使いますので、経路の途中にあるルーターやファイアーウォールなどでICMPプロトコルがブロックされていると、pingコマンドを実行してもうまく結果が返ってこない場合があります。また、対象となるリモートのホストがpingコマンドに反応を返さない場合もあります。</p><p>レスポンス結果(RTT)の目安としては、同じネットワークセグメント上のホストの場合は1ms(ミリ秒)以内、国内のインターネット上の他のホストの場合、10ms〜30ms、地球の裏側で500ms程度かかかります。</p><section class="level3" aria-labelledby="ethtoolコマンドを使ったネットワークインターフェース情報の確認"><h3 id="ethtoolコマンドを使ったネットワークインターフェース情報の確認">ethtoolコマンドを使ったネットワークインターフェース情報の確認</h3><p>ethtoolコマンドは、ネットワークインターフェースに対するハードウェアスペックやファームウェア、リンク状態、リンクスピードなどの確認、およびアクセラレーション機能の有効化・無効化を制御することができます。</p><p>ネットワークインターフェースに対するハードウェアスペックやファームウェア、リンク状態、リンクスピードなどの確認をするにはethtoolコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ethtool</span> eth0</span></span>
+<span class="token output">Settings for eth0:
+   Supported ports: [ TP ]
+   Supported link modes:   10baseT/Half 10baseT/Full
+                        100baseT/Half 100baseT/Full
+                        1000baseT/Full
+   Supported pause frame use: No
+   Supports auto-negotiation: Yes
+   Advertised link modes:  10baseT/Half 10baseT/Full
+                        100baseT/Half 100baseT/Full
+                        1000baseT/Full
+   Advertised pause frame use: No
+   Advertised auto-negotiation: Yes
+   Speed: 1000Mb/s
+   Duplex: Full
+   Port: Twisted Pair
+   PHYAD: 1
+   Transceiver: internal
+   Auto-negotiation: on
+   MDI-X: Unknown
+   Supports Wake-on: g
+   Wake-on: g
+   Link detected: yes</span></code></pre><p>ファームウェアのバージョンなどを確認するにはethtool -iコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ethtool</span> -i eth0</span></span>
+<span class="token output">driver: bnx2
+version: 2.2.3
+firmware-version: bc 4.6.4 NCSI 1.0.3
+bus-info: 0000:02:00.0
+supports-statistics: yes
+supports-test: yes
+supports-eeprom-access: yes
+supports-register-dump: yes
+supports-priv-flags: no</span></code></pre><p>仮想マシンが利用している仮想ネットワークインターフェースの場合、多くの情報が取得できない場合があります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ethtool</span> eth0</span></span>
+<span class="token output">Settings for eth0:
+ Link detected: yes</span></code></pre><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ethtool</span> -i eth0</span></span>
+<span class="token output">driver: virtio_net
+version:
+firmware-version:
+bus-info: virtio0
+supports-statistics: no
+supports-test: no
+supports-eeprom-access: no
+supports-register-dump: no
+supports-priv-flags: no</span></code></pre></section></section><section class="level2" aria-labelledby="各種ネットワーク設定ファイル"><h2 id="各種ネットワーク設定ファイル">各種ネットワーク設定ファイル</h2><p>Linuxのネットワーク関連の設定は、いくつかの設定ファイルに分散して設定されています。</p><section class="level3" aria-labelledby="ネットワーク設定に関する情報を指定-etcsysconfignetwork"><h3 id="ネットワーク設定に関する情報を指定-etcsysconfignetwork">ネットワーク設定に関する情報を指定 /etc/sysconfig/network</h3><p>設定ファイル/etc/sysconfig/networkには、ネットワークの有効化やホスト名などの情報が含まれています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/sysconfig/network</span></span>
+<span class="token output">NETWORKING=yes
+HOSTNAME=server.example.com
+NTPSERVERARGS=iburst</span></code></pre><p>ホスト名を変更したい場合には、HOSTNAMEの値を変更して、システムを再起動します。</p></section><section class="level3" aria-labelledby="静的な名前解決-etchosts"><h3 id="静的な名前解決-etchosts">静的な名前解決 /etc/hosts</h3><p>設定ファイル/etc/hostsには、静的な名前解決のためにIPアドレスとホスト名が対になって列挙された情報が記述されています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/hosts</span></span>
+<span class="token output">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+192.168.0.10 server.example.com server
+192.168.0.101 client.example.com client</span></code></pre></section><section class="level3" aria-labelledby="参照dns設定ファイル-etcresolvconf"><h3 id="参照dns設定ファイル-etcresolvconf">参照DNS設定ファイル /etc/resolv.conf</h3><p>設定ファイル/etc/resolv.confには、DNSを使って名前解決を行う場合に参照するDNSサーバの情報が記述されています。先に記述されてあるDNSサーバを優先DNSサーバとして最初に参照します。その優先DNSサーバが応答しない場合には、次に記述されている代替DNSサーバを参照します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/resolv.conf</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Generated by NetworkManager</span></span>
+<span class="token output">search example.com
+nameserver 192.168.0.1</span></code></pre><section class="level4" aria-labelledby="etcresolvconfは直接編集しない"><h4 id="etcresolvconfは直接編集しない">/etc/resolv.confは直接編集しない</h4><p>/etc/resolv.confファイルを直接編集して、参照するDNSの設定を変更することは推奨されていません。なぜなら、NetworkManagerやnetworkサービス、DHCPクライアントの設定ファイルなどにより、/etc/resolv.confの設定情報は自動的に変更されます。そのため、/etc/resolv.confを手動で変更後にシステムや各サービスを再起動すると、/etc/resolv.confの設定が古い設定で上書きされてしまい、名前解決ができなくなるなど予期せぬトラブルが発生してしまいます。</p><p>DNSサーバの設定は、インターフェース設定ファイルに記述しておきます。ネットワークインターフェースが有効になる際に、記述しておいた値に基づいて/etc/resolv.confファイルが設定されます。</p><p>/etc/sysconfig/network-scripts/ifcfg-eth0に以下を追記します。DNS1で優先DNSサーバ、DNS2で代替DNSサーバを指定します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token output">DNS1=192.168.0.1
+DNS2=192.168.0.2</span></code></pre><p>この設定は、システム再起動時、またはNetworkManagerサービス、あるいはnetworkサービスの再起動を行うと/etc/resolv.confに反映されます。</p></section></section><section class="level3" aria-labelledby="名前解決設定ファイル-etcnsswitchconf"><h3 id="名前解決設定ファイル-etcnsswitchconf">名前解決設定ファイル /etc/nsswitch.conf</h3><p>設定ファイル/etc/nsswitch.confには、名前解決などを行う場合に参照する仕組みのリストと優先順位が記述されています。/etc/hostsを参照するのか、DNSやNISを参照させるのかなどが細かく設定できます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/nsswitch.conf</span></span>
+<span class="token output">（略）
+#hosts:     db files nisplus nis dns
+hosts:      files dns
+（略）</span></code></pre><p>ホストの名前解決は、左から順に「files」、「dns」で優先度が記述されています。まず設定ファイル/etc/hostsを参照し、次にDNSを参照して名前解決を行います。<br>
+この設定ファイルには他に、ユーザ認証を行う際の参照先の指定なども記述されます。</p></section><section class="level3" aria-labelledby="ポート番号とサービスの対応リスト-etcservices"><h3 id="ポート番号とサービスの対応リスト-etcservices">ポート番号とサービスの対応リスト /etc/services</h3><p>設定ファイル/etc/servicesには、各種TCP/UDPのポート番号と対応するサービスの名前が記述されています。</p><p>たとえば、HTTPプロトコルは以下のように記述されています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token output">http         80/tcp       www www-http # WorldWideWeb HTTP</span></code></pre><p>各種コマンドがポート番号を表示する際、TCPのポート番号80番を表示する時にはプロトコル名に置き換えてhttpと表示します。<br>
+netstatの-nオプションは表示を数値で表示し、-nオプションが指定されないとプロトコル名などを名前で表示します。</p><p>この設定ファイルは、あくまで各種コマンドがポート番号をプロトコル名に置き換えて表示するために参照されます。実際には他のプロトコルがポートを使用している場合もあります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">netstat</span> -nat <span class="token operator">|</span> <span class="token function">grep</span> <span class="token number">80</span></span></span>
+<span class="token output">tcp        0      0 :::80                       :::*                        LISTEN
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">netstat</span> -at <span class="token operator">|</span> <span class="token function">grep</span> http</span></span>
+<span class="token output">tcp        0      0 *:http                      *:*                         LISTEN</span></code></pre><p>ポート番号80がhttpに置き換えられているのが分かります。ポート番号が数字のまま表示される場合があるのは、/etc/servicesに記述が無いためです。<br>
+また、1つ目の例は表示がIPv6での表示になっていますが、これはIPv6が有効な場合のApache Webサーバの動作によるものです。この状態でもIPv4で接続できます。</p></section><section class="level3" aria-labelledby="プロトコル定義ファイル-etcprotocols"><h3 id="プロトコル定義ファイル-etcprotocols">プロトコル定義ファイル /etc/protocols</h3><p>設定ファイル/etc/protocolsには各種プロトコルの名前とプロトコル番号が記述されています。<br>
+たとえば、よく使用しているプロトコル番号は以下の通りです。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token output">ip 0 IP  # internet protocol, pseudo protocol number
+icmp 1 ICMP  # internet control message protocol
+tcp 6 TCP  # transmission control protocol
+udp 17 UDP  # user datagram protocol</span></code></pre></section></section><section class="level2" aria-labelledby="iptablesによるパケットフィルタリング"><h2 id="iptablesによるパケットフィルタリング">iptablesによるパケットフィルタリング</h2><p>iptablesはLinuxカーネルに実装されたパケットフィルタリングの仕組みです。<br>
+パケットフィルタリングとは、ネットワークに対してどのようなパケットの通過を許可および拒否するか判定する機能のことです。ファイアーウォールの基本的な機能であるため、ファイアーウォール機能と説明される場合もあります。<br>
+iptablesは、カーネル内のNF(netfilter)によって実装されており、ユーザーランドのパケットフィルタリングのルール定義を行うコマンドとしてiptablesコマンドが用意されています。</p><section class="level3" aria-labelledby="iptablesのnat機能"><h3 id="iptablesのnat機能">iptablesのNAT機能</h3><p>iptablesにはパケットフィルタリング機能の他に、NAT(Network Address Translation)というパケットの送信元または宛先のIPアドレスを変換する機能があります。<br>
+NATには以下の種類があります。ここでは内部ネットワークをプライベートIPアドレスが割り振られたLAN、外部ネットワークをグローバルIPアドレスが割り振られたインターネットを想定して説明します。</p><section class="level4" aria-labelledby="スタティックnat"><h4 id="スタティックnat">スタティックNAT</h4><p>内部ホストのIPアドレスと外部向けIPアドレスを1対1で結びつけます。内部から外部へアクセスするパケットの送信元IPアドレスを、内部ホストのIPアドレスから結びつけられている外部向けIPアドレスに書き換えて通信を行います。<br>
+外部と通信できるホストは用意された外部向けIPアドレスの数とあらかじめ決まっています。外部から内部への通信を許可して、外部から内部のホストへアクセスさせることもできます。</p></section><section class="level4" aria-labelledby="ダイナミックnat"><h4 id="ダイナミックnat">ダイナミックNAT</h4><p>複数の内部ホストのIPアドレスと複数の外部向けIPアドレスをN対Nで結びつけます。内部から外部へアクセスするパケットの送信元IPアドレスを、内部ホストのIPアドレスから外部向けIPアドレスのプールから選択されたIPアドレスに書き換えて通信を行います。<br>
+IPアドレスの対応付けは通信開始時に行われるので、外部向けIPアドレスが余っていないと通信が行えませんが、他のホストが通信を終了して外部向けIPアドレスが解放されると通信が行えるようになります。内部のホストの数が多い場合には、外部向けIPアドレスが不足することになるので、次のNAPTを使用した方が外部との通信が行いやすいでしょう。</p></section><section class="level4" aria-labelledby="naptipマスカレード"><h4 id="naptipマスカレード">NAPT(IPマスカレード)</h4><p>複数の内部ホストのIPアドレスと1つの外部向けIPアドレスを結びつけます。内部向けIPアドレスは外部に出る際に外部向けIPアドレスに書き換えられて通信を行います。その際にNAPTではポート番号の変換も行います。ポート番号は最大65535番まであるので、1つの外部IPアドレスで沢山の内部ホストを外部と通信させることができます。</p></section></section><section class="level3" aria-labelledby="iptablesの起動と停止"><h3 id="iptablesの起動と停止">iptablesの起動と停止</h3><p>serviceコマンドでiptablesの起動と停止が行えます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> iptables start</span></span>
+<span class="token output">iptables: チェインをポリシー ACCEPT へ設定中filter         [  OK  ]
+iptables: ファイアウォールルールを消去中:                  [  OK  ]
+iptables: モジュールを取り外し中:                          [  OK  ]
+iptables: ファイアウォールルールを適用中:                  [  OK  ]</span></code></pre><p>serviceコマンドでiptablesを停止します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> iptables stop</span></span>
+<span class="token output">iptables: チェインをポリシー ACCEPT へ設定中filter         [  OK  ]
+iptables: ファイアウォールルールを消去中:                  [  OK  ]
+iptables: モジュールを取り外し中:                          [  OK  ]</span></code></pre></section><section class="level3" aria-labelledby="iptablesのステータス確認"><h3 id="iptablesのステータス確認">iptablesのステータス確認</h3><p>serviceコマンドでiptablesのステータスを確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> iptables start</span></span>
+<span class="token output">iptables: ファイアウォールルールを適用中:                  [  OK  ]
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> iptables status</span></span>
+<span class="token output">テーブル: filter
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination
+1    ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED
+2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0
+3    ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0
+4    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:22
+5    REJECT     all  --  0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination
+1    REJECT     all  --  0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination</span></code></pre><p>iptables -Lコマンドでもiptablesのステータスの確認ができます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iptables -L</span></span></code></pre><p>iptables-saveコマンドは、iptablesの設定をiptablesコマンドの設定オプションの形式で出力します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iptables-save</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Generated by iptables-save v1.4.7 on Fri Jan  <span class="token number">9</span> <span class="token number">16</span>:51:47 <span class="token number">2015</span></span></span>
+<span class="token output">*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [33:4180]
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+-A INPUT -j REJECT --reject-with icmp-host-prohibited
+-A FORWARD -j REJECT --reject-with icmp-host-prohibited
+COMMIT
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Completed on Fri Jan  <span class="token number">9</span> <span class="token number">16</span>:51:47 <span class="token number">2015</span></span></span></code></pre></section><section class="level3" aria-labelledby="パケットフィルタリングの設定"><h3 id="パケットフィルタリングの設定">パケットフィルタリングの設定</h3><p>パケットフィルタリングはiptables-Aコマンドで設定します。コマンドの書式は以下の通りです。</p><pre class="language-text"><code class="language-text">iptables -A チェーン 条件 -j ターゲット</code></pre><p>条件は様々なオプションで設定しますが、基本的な設定は後述します。<br>
+チェーンとターゲットで設定できる値は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>チェーンの種類</th><th>説明</th></tr></thead><tbody><tr><td>INPUT</td><td>受信パケット</td></tr><tr><td>OUTPUT</td><td>送信パケット</td></tr><tr><td>FORWARD</td><td>フォワードするパケット</td></tr><tr><td>PREROUTING</td><td>受信時に変換するチェーン</td></tr><tr><td>POSTROUTING</td><td>送信時に変換するチェーン</td></tr></tbody></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>ターゲットの種類</th><th>説明</th></tr></thead><tbody><tr><td>ACCEPT</td><td>パケットの通過を許可</td></tr><tr><td>DROP</td><td>パケットを破棄</td></tr><tr><td>REJECT [--reject-with <type>]</type></td><td>パケットを拒否し、ICMPで通知</td></tr><tr><td>LOG</td><td>パケットの情報をsyslogに出力</td></tr></tbody></table></section><section class="level3" aria-labelledby="パケットの通過を許可するiptables設定ルール"><h3 id="パケットの通過を許可するiptables設定ルール">パケットの通過を許可するiptables設定ルール</h3><p>パケットの通過を許可するには、INPUTチェーンに対して許可したいプロトコルやポート番号を指定します。コマンドの書式は以下の通りです。</p><pre class="language-text"><code class="language-text">iptables -A INPUT -m tcp -p tcp --dport ポート番号 -j ACCEPT</code></pre><p>以下の例ではTCPプロトコルの80番ポート(HTTP)の通信を許可する設定を行っています。ただし、iptablesのルールは設定された順番に適用されます。デフォルト設定ではすべてのパケットをREJECTするルールが設定されているため、このコマンドで一番最後に追加されたルールは実際には機能しません。</p><p>実際の運用では、後述する設定ファイル/etc/sysconfig/iptablesに設定を記述して、iptablesに読み込ませる方法で設定を行います。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iptables -A INPUT -m tcp -p tcp --dport <span class="token number">80</span> -j ACCEPT</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">iptables -L</span></span>
+<span class="token output">Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     all  --  anywhere             anywhere            state RELATED,ESTABLISHED
+ACCEPT     icmp --  anywhere             anywhere
+ACCEPT     all  --  anywhere             anywhere
+ACCEPT     tcp  --  anywhere             anywhere            state NEW tcp dpt:ssh
+REJECT     all  --  anywhere             anywhere            reject-with icmp-host-prohibited ※すべて拒否
+ACCEPT     tcp  --  anywhere             anywhere            tcp dpt:http ※到達しません
+（略）</span></code></pre></section><section class="level3" aria-labelledby="iptablesの設定を保存する"><h3 id="iptablesの設定を保存する">iptablesの設定を保存する</h3><p>iptablesの設定をシステム起動時に再度設定したい場合には、変更内容を保存しておきます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> iptables save</span></span>
+<span class="token output">iptables: Saving firewall rules to /etc/sysconfig/iptables: [  OK  ]</span></code></pre><p>保存されたiptablesの設定ルールは/etc/sysconfig/iptablesに保存されます。iptablesサービスは起動時にこの設定ファイルを読み込んで設定を行います。</p><p>新しいiptablesのルールを設定したい場合には、この設定ファイルを変更してiptablesに読み込ませます。</p></section><section class="level3" aria-labelledby="iptablesの設定ルールをリロードする"><h3 id="iptablesの設定ルールをリロードする">iptablesの設定ルールをリロードする</h3><p>設定ファイル/etc/sysconfig/iptablesを直接変更した場合は、設定ルールをリロード(再読み込み)してルールを適用する必要があります。リロードするには、service iptables reloadコマンドを実行します。</p><p>iptablesサービスはservice iptables restartで再度設定を行うこともできますが、プロトコルによってはiptablesの追加モジュールを使用している場合があり、restartすると一度モジュールがアンロードされて接続が切れてしまうことがあります。reloadを指定すれば、接続を切らずに新しいルールを適用できます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">service</span> iptables reload</span></span>
+<span class="token output">iptables: Trying to reload firewall rules:                 [  OK  ]</span></code></pre></section><section class="level3" aria-labelledby="system-config-firewall-tuiを使用したiptablesの設定"><h3 id="system-config-firewall-tuiを使用したiptablesの設定">system-config-firewall-tuiを使用したiptablesの設定</h3><p>system-config-firewall-tuiは、iptableの設定をCUIで行えるツールです。</p><p>もしインストールされていなかったら、以下の通りインストールを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">yum <span class="token function">install</span> system-config-firewall-tui</span></span></code></pre><ol>
+<li>system-config-firewall-tuiを実行します。</li>
+</ol><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">system-config-firewall-tui</span></span></code></pre><p>＃2</p><ol start="2">
+<li>カスタマイズを選択します。</li>
+</ol><figure><img src="firewall1.png" alt="「カスタマイズ」を選択します"><figcaption aria-hidden="true">「カスタマイズ」を選択します</figcaption></figure><p>system-config-firewall-tuiを実行すると、設定画面が表示されます。ファイアウォールの設定を変更したい場合、「カスタマイズ」を選択してEnterキーを押します。選択の変更はTABキー、またはカーソルキーで行えます。</p><p>＃3</p><ol start="3">
+<li>許可するサービスを選択します。</li>
+</ol><figure><img src="firewall2.png" alt="許可するサービスを選択します"><figcaption aria-hidden="true">許可するサービスを選択します</figcaption></figure><p>カーソルキーの上下で許可したいサービスを選択し、スペースキーで有効にします。ここでは「WWW (HTTP)」を追加で有効にします。設定が終わったら「閉じる」を選択します。</p><ol start="4">
+<li>設定がすぐに反映されることを確認します。</li>
+</ol><figure><img src="firewall3.png" alt="設定はすぐに反映されます"><figcaption aria-hidden="true">設定はすぐに反映されます</figcaption></figure><p>元の画面に戻るので、「OK」を選択します。現在のiptablesの設定を上書きするか確認されるので、「はい」を選択して終了します。</p><p>＃5</p><ol start="5">
+<li>設定を確認します。</li>
+</ol><p>system-config-firewall-tuiで設定を変更すると、/etc/sysconfig/iptablesの設定が上書きされ、現在設定されているiptablesのルールも変更されます。</p><p>たとえば、WWW(HTTP)の通信を許可した場合、下記のように80番ポートの通信許可設定が追加されます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/sysconfig/iptables</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Firewall configuration written by system-config-firewall</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">Manual customization of this <span class="token function">file</span> is not recommended.</span></span>
+<span class="token output">*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+-A INPUT -j REJECT --reject-with icmp-host-prohibited
+-A FORWARD -j REJECT --reject-with icmp-host-prohibited
+COMMIT</span></code></pre></section></section><section class="level2" aria-labelledby="ファイアウォールの設定"><h2 id="ファイアウォールの設定">ファイアウォールの設定</h2><p>ファイアウォールはネットワークにおいて様々なアクセス制限を行い、ネットワークからの攻撃や不正なアクセス等を防ぐ機能です。</p><p>AlmaLinuxのファイアウォール機能はfirewalldによって管理されています。firewalldでは、ネットワークインターフェースへのパケットの受信の許可、拒否のルールを管理しています。firewalldの設定は、firewall-cmdコマンドで行います。</p><section class="level3" aria-labelledby="ファイアウォール設定の確認"><h3 id="ファイアウォール設定の確認">ファイアウォール設定の確認</h3><p>まず、許可されているサービスを調べます。</p><pre class="language-text"><code class="language-text">$ sudo firewall-cmd --list-services
+cockpit dhcpv6-client http ssh</code></pre><p>ここでは、HTTPやSSHなどのプロトコルが使用するポートが受信を許可されています。</p></section><section class="level3" aria-labelledby="許可サービスの追加"><h3 id="許可サービスの追加">許可サービスの追加</h3><p>サービスの許可を追加します。以下の例では、imapサービスを許可しています。</p><pre class="language-text"><code class="language-text">$ sudo firewall-cmd --add-service=imap
+success</code></pre><p>この設定は即座に有効になりますが、システムを再起動すると有効にはなりません。再起動後も有効にするには、これまでの実習で行った以下のような設定を行った後に再読み込みを行うか、後述する設定の保存を行います。</p><pre class="language-text"><code class="language-text">sudo firewall-cmd --add-service=imap --zone=public --permanent
+sudo firewall-cmd --reload</code></pre></section><section class="level3" aria-labelledby="設定可能なサービスの確認"><h3 id="設定可能なサービスの確認">設定可能なサービスの確認</h3><p>設定可能なサービスはあらかじめ定義されているので、一覧を確認してみます。</p><pre class="language-text"><code class="language-text">$ sudo firewall-cmd --get-services
+RH-Satellite-6 amanda-client amanda-k5-client bacula bacula-client bgp bitcoin bitcoin-rpc bitcoin-testnet bitcoin-testnet-rpc ceph ceph-mon cfengine condor-collector ctdb dhcp dhcpv6 dhcpv6-client dns docker-registry docker-swarm dropbox-lansync elasticsearch freeipa-ldap freeipa-ldaps freeipa-replication freeipa-trust ftp ganglia-client ganglia-master git gre high-availability http https imap imaps ipp ipp-client ipsec irc ircs iscsi-target jenkins kadmin kerberos kibana klogin kpasswd kprop kshell ldap ldaps libvirt libvirt-tls managesieve mdns minidlna mongodb mosh mountd ms-wbt mssql murmur mysql nfs nfs3 nmea-0183 nrpe ntp openvpn ovirt-imageio ovirt-storageconsole ovirt-vmconsole pmcd pmproxy pmwebapi pmwebapis pop3 pop3s postgresql privoxy proxy-dhcp ptp pulseaudio puppetmaster quassel radius redis rpc-bind rsh rsyncd samba samba-client sane sip sips smtp smtp-submission smtps snmp snmptrap spideroak-lansync squid ssh syncthing syncthing-gui synergy syslog syslog-tls telnet tftp tftp-client tinc tor-socks transmission-client upnp-client vdsm vnc-server wbem-https xmpp-bosh xmpp-client xmpp-local xmpp-server zabbix-agent zabbix-server</code></pre><p>プロトコル名の場合もあれば、使用したいソフトウェアの名称で定義されている場合もあります。</p></section><section class="level3" aria-labelledby="許可サービスの取り消し"><h3 id="許可サービスの取り消し">許可サービスの取り消し</h3><p>許可されているサービスを取り消しすることもできます。</p><pre class="language-text"><code class="language-text">$ sudo firewall-cmd --remove-service=imap
+success</code></pre><p>この設定も一時的なもので、システムの再起動時に許可したくない場合には、次の設定の保存が必要です。</p></section><section class="level3" aria-labelledby="ファイアウォール設定の保存"><h3 id="ファイアウォール設定の保存">ファイアウォール設定の保存</h3><p>上記の方法で行ったファイアウォールルールの変更は、一時的なものです。そのため、再起動をすると失われてしまいます。再起動後も設定を有効にするには、現在の設定を保存します。</p><pre class="language-text"><code class="language-text">sudo firewall-cmd --runtime-to-permanent</code></pre></section></section></section>
+</body>
+</html>

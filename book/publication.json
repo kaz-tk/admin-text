@@ -1,0 +1,54 @@
+{
+  "@context": [
+    "https://schema.org",
+    "https://www.w3.org/ns/pub-context"
+  ],
+  "type": "Book",
+  "conformsTo": "https://github.com/vivliostyle/vivliostyle-cli",
+  "name": "Linuxシステム管理標準教科書",
+  "author": "LPI-Japan",
+  "inLanguage": "ja",
+  "dateModified": "2025-07-15T04:53:21.228Z",
+  "readingOrder": [
+    {
+      "url": "index.html",
+      "name": "Table of Contents",
+      "rel": "contents",
+      "type": "LinkedResource"
+    },
+    {
+      "url": "0preface.html",
+      "name": "まえがき"
+    },
+    {
+      "url": "1user.html",
+      "name": "ユーザとグループの管理"
+    },
+    {
+      "url": "2network.html",
+      "name": "ネットワークの管理"
+    },
+    {
+      "url": "3service.html",
+      "name": "サービスの管理"
+    },
+    {
+      "url": "4filesystem.html",
+      "name": "ファイルシステムの管理"
+    },
+    {
+      "url": "5system.html",
+      "name": "システムのメンテナンス"
+    },
+    {
+      "url": "6troubleshoot.html",
+      "name": "トラブルシューティング"
+    },
+    {
+      "url": "7CentOS7.html",
+      "name": "CentOS 7への移行"
+    }
+  ],
+  "resources": [],
+  "links": []
+}

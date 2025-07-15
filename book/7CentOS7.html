@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>CentOS 7への移行</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+<section class="level1" aria-labelledby="centos-7への移行"><h1 id="centos-7への移行">CentOS 7への移行</h1><section class="level2" aria-labelledby="centos-7への移行-1"><h2 id="centos-7への移行-1">CentOS 7への移行</h2><p>本教科書ではCentOS 6を使って解説をしてきましたが、現在では新しいバージョンであるCentOS 7もリリースされています。</p><p>CentOS 7へのバージョンアップ後も基本的な運用管理の知識は大きくは変わりませんが、CentOS 7で大きく変更になった以下の点について解説します。</p><ul>
+<li>SysV initからsystemdへの移行</li>
+<li>journaldによるログ記録</li>
+<li>firewalldによるパケットフィルタリング</li>
+</ul><p>また、変更されたわけではありませんが、ネットワークはNetworkManagerがCentOS 6と変わらず標準なので、CUIのNetworkManager用のツールであるnmtuiを紹介します。</p></section><section class="level2" aria-labelledby="sysv-initからsystemdへの移行"><h2 id="sysv-initからsystemdへの移行">SysV initからsystemdへの移行</h2><p>CentOS 7から、これまでのサービス管理であるSysV init、またはUpstartからLinux向けの新しいサービス管理マネージャーである「systemd」に置き換えられました。/etc/rc.dディレクトリ以下のサービス起動スクリプトを使う方式から改められました。</p><p>簡単にsystemdでのサービス管理について解説します。</p><section class="level3" aria-labelledby="ユニットでの管理"><h3 id="ユニットでの管理">ユニットでの管理</h3><p>従来ランレベルやサービスと呼ばれていた仕組みは、systemdでは「ユニット」として再定義されました。ユニットには、「ターゲット」（ランレベルに相当）ユニットや「サービス」ユニットがあり、それぞれのユニットは依存関係の定義ができるようになっています。</p><p>依存関係とは、たとえば「このサービスを実行するにはあらかじめこのサービスが実行されていなければならない」という関係です。従来のSysV initではサービスには依存関係が無かったため、サービスを順番に実行するという方法で依存関係を解消していました。しかし、実行の順番を保証するために1つずつ実行する「順列処理」となるため、システム起動が遅くなるという難点がありました。</p><p>systemdでは依存関係にないサービスを「並列処理」で実行するため、高速にシステムを起動できるという利点があります。</p><p>主なユニットの種類は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>ユニット</th><th>役割</th></tr></thead><tbody><tr><td>service</td><td>従来のサービスと同様</td></tr><tr><td>target</td><td>サービスを取りまとめるためのユニット</td></tr><tr><td>mount</td><td>マウントポイント</td></tr><tr><td>swap</td><td>スワップ領域</td></tr><tr><td>device</td><td>デバイス</td></tr></tbody></table></section><section class="level3" aria-labelledby="サービスの操作"><h3 id="サービスの操作">サービスの操作</h3><p>systemdでは、サービスの起動や停止を行うのにsystemctlコマンドを使用します。これは従来のserviceコマンドに相当します。</p><p>Webサービスの起動や停止、再起動、そして状態の確認を行うには、以下のsystemctlコマンドを使用します。</p><section class="level4" aria-labelledby="サービスの起動"><h4 id="サービスの起動">サービスの起動</h4><p>systemctl startコマンドで、サービスを起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl start httpd</span></span></code></pre></section><section class="level4" aria-labelledby="サービスのステータス確認"><h4 id="サービスのステータス確認">サービスのステータス確認</h4><p>systemctl statusコマンドで、サービスのステータスを確認できます。</p><p>systemdでは、サービスのプロセスを「コントロールグループ」（cgroup）というLinuxカーネルの仕組みで実行するように変わりました。cgroupを使うことで、CPUやメモリなどのリソースを柔軟に割り当てることができる利点があります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl status httpd</span></span>
+<span class="token output">httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: active (running) since 水 2015-01-28 15:23:50 JST; 33s ago
+ Main PID: 2926 (httpd)
+   Status: "Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec"
+   CGroup: /system.slice/httpd.service
+           ├─2926 /usr/sbin/httpd -DFOREGROUND
+           ├─2927 /usr/sbin/httpd -DFOREGROUND
+           ├─2928 /usr/sbin/httpd -DFOREGROUND
+           ├─2929 /usr/sbin/httpd -DFOREGROUND
+           ├─2930 /usr/sbin/httpd -DFOREGROUND
+           └─2931 /usr/sbin/httpd -DFOREGROUND
+
+ 1月 28 15:23:50 centos7.example.com httpd[2926]: AH00557: httpd: apr_sockad...
+ 1月 28 15:23:50 centos7.example.com httpd[2926]: AH00558: httpd: Could not ...
+ 1月 28 15:23:50 centos7.example.com systemd[1]: Started The Apache HTTP Ser...
+Hint: Some lines were ellipsized, use -l to show in full.</span></code></pre></section><section class="level4" aria-labelledby="サービスの再起動"><h4 id="サービスの再起動">サービスの再起動</h4><p>systemctl restartコマンドで、サービスを再起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl restart httpd</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl status httpd</span></span>
+<span class="token output">httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: active (running) since 水 2015-01-28 15:24:40 JST; 2s ago
+  Process: 2945 ExecStop=/bin/kill -WINCH ${MAINPID} (code=exited, status=0/SUCCESS)
+ Main PID: 2950 (httpd)
+（略）</span></code></pre></section><section class="level4" aria-labelledby="サービスの停止"><h4 id="サービスの停止">サービスの停止</h4><p>systemctl stopコマンドで、サービスを停止します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl stop httpd</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl status httpd</span></span>
+<span class="token output">httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: inactive (dead)</span></code></pre></section></section><section class="level3" aria-labelledby="ユニット一覧の取得"><h3 id="ユニット一覧の取得">ユニット一覧の取得</h3><p>systemdで管理されているユニットの一覧を取得するには、systemctl list-unit-filesコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-unit-files</span></span></code></pre><p>すべての種類のユニットが表示されてしまうので、ユニットの種類を絞り込むには-tオプションを付与して実行します。</p><p>たとえば、serviceユニットだけを表示するには以下のsystemctlコマンドを実行します。これは従来のchkconfig --listコマンドに相当します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-unit-files -t <span class="token function">service</span></span></span></code></pre><p>表示されるステータス（STATE）の意味は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>ステータス</th><th>意味</th></tr></thead><tbody><tr><td>enabled</td><td>システム起動時に実行される</td></tr><tr><td>disabled</td><td>システム起動時に実行されない</td></tr><tr><td>static</td><td>システム起動時の実行の有無は設定できない</td></tr></tbody></table></section><section class="level3" aria-labelledby="現在のユニットの状況を確認"><h3 id="現在のユニットの状況を確認">現在のユニットの状況を確認</h3><p>現在のユニットの状況を確認するには、systemctl list-unitsコマンドを実行します。systemctlコマンドのデフォルトはこのサブコマンドの指定になっています。</p><p>以下の例は同じ結果を返します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl</span></span></code></pre><p>-tオプションを使って、serviceユニットだけに絞り込むこともできます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl -t <span class="token function">service</span></span></span>
+<span class="token output">UNIT                         LOAD   ACTIVE SUB     DESCRIPTION
+abrt-ccpp.service            loaded active exited  Install ABRT coredump hook
+abrt-oops.service            loaded active running ABRT kernel log watcher
+abrt-xorg.service            loaded active running ABRT Xorg log watcher
+abrtd.service                loaded active running ABRT Automated Bug Reporting
+alsa-state.service           loaded active running Manage Sound Card State (rest
+atd.service                  loaded active running Job spooling tools
+（略）
+kdump.service                loaded failed failed  Crash recovery kernel arming
+（略）</span></code></pre><p>表示の意味は以下の通りです。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>意味</th></tr></thead><tbody><tr><td>UNIT</td><td>ユニット名</td></tr><tr><td>LOAD</td><td>systemdへの設定の読み込み状況</td></tr><tr><td>ACTIVE</td><td>実行状態の概要。activeかinactiveで表される</td></tr><tr><td>SUB</td><td>実行状態の詳細。running（実行中）やexited（実行したが終了した）などで表される。</td></tr><tr><td>DESCRIPTION</td><td>ユニットの説明</td></tr></tbody></table><p>デフォルトでは、項目ACTIVEの実行状態がactiveになっているもののみが表示されています。inactiveのユニットも表示するには--allオプションを付与して実行します。</p><p>項目LOADは、systemctl maskコマンドで無効化されるとmaskedに変わります。詳細は後述します。</p><p>項目ACTIVEがfailedになっていると、何らかの原因で起動失敗しているということになります。上記の例では、kdump（カーネルダンプ）サービスの起動に失敗しています。</p></section><section class="level3" aria-labelledby="デバイス一覧の確認"><h3 id="デバイス一覧の確認">デバイス一覧の確認</h3><p>-t deviceオプションを付与して、デバイス一覧を表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units -t device</span></span>
+<span class="token output">UNIT                                                                                     LOAD   ACTIVE SUB     DESCRIPTION
+sys-devices-pci0000:00-0000:00:05.0-virtio0-net-eth0.device                              loaded active plugged Virtio network device
+sys-devices-pci0000:00-0000:00:1f.2-ata3-host2-target2:0:0-2:0:0:0-block-sda-sda1.device loaded active plugged CentOS_7-0_SSD
+（略）</span></code></pre></section><section class="level3" aria-labelledby="マウント状況の確認"><h3 id="マウント状況の確認">マウント状況の確認</h3><p>-t mountオプションを付与して、マウントの状況一覧を表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units -t <span class="token function">mount</span></span></span>
+<span class="token output">UNIT                         LOAD   ACTIVE SUB     DESCRIPTION
+-.mount                      loaded active mounted /
+boot.mount                   loaded active mounted /boot
+dev-hugepages.mount          loaded active mounted Huge Pages File System
+dev-mqueue.mount             loaded active mounted POSIX Message Queue File Syst
+home.mount                   loaded active mounted /home
+（略）</span></code></pre></section><section class="level3" aria-labelledby="スワップ状況の確認"><h3 id="スワップ状況の確認">スワップ状況の確認</h3><p>-t swapオプションを付与して、スワップの状況一覧を表示します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl list-units -t swap</span></span>
+<span class="token output">UNIT             LOAD   ACTIVE SUB    DESCRIPTION
+dev-dm\x2d0.swap loaded active active /dev/dm-0
+（略）</span></code></pre></section><section class="level3" aria-labelledby="サービスの自動起動の設定"><h3 id="サービスの自動起動の設定">サービスの自動起動の設定</h3><p>システム起動時にサービスを自動起動するには、systemctl enableコマンドを実行します。これは従来のchkconfigコマンドに相当します。</p><p>例として、Webサービスをシステム起動時に自動起動するように設定します。/usr/lib/systemd/system/httpd.serviceがWebサービスの起動スクリプトです。systemctl enableコマンドを実行すると、/etc/systemd/system/multi-user.target.wantsディレクトリにシンボリックリンクが作成されます。</p><p>この動作は、multi-user.targetターゲットユニットが呼び出された時に、シンボリックリンクの起動スクリプトが実行されるように設定しています。SysV initにおける/etc/init.dディレクトリ内のサービス起動スクリプトと/etc/rc.dディレクトリ内にランレベル毎に作成されるシンボリックリンクの関係に相当します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl <span class="token builtin class-name">enable</span> httpd</span></span>
+<span class="token output">ln -s '/usr/lib/systemd/system/httpd.service' '/etc/systemd/system/multi-user.target.wants/httpd.service'</span></code></pre><p>システム起動時の自動起動を行わないようにするには、systemctl disableコマンドを実行します。作成されたシンボリックリンクが削除され、起動スクリプトは呼び出されなくなります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl disable httpd</span></span>
+<span class="token output">rm '/etc/systemd/system/multi-user.target.wants/httpd.service'</span></code></pre></section><section class="level3" aria-labelledby="サービスのsystemdからの除外"><h3 id="サービスのsystemdからの除外">サービスのsystemdからの除外</h3><p>systemctl maskコマンドを実行すると、指定したサービスがsystemdの管理から除外され、手動での起動も行えなくなります。</p><p>動作としては、/etc/systemd/system/httpd.serviceが/dev/nullへのシンボリックリンクとして作成され、この起動スクリプトが呼び出されても何も行われなくなります。</p><p>Webサービスをsystemdから除外します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl mask httpd</span></span>
+<span class="token output">ln -s '/dev/null' '/etc/systemd/system/httpd.service'
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl start httpd</span></span>
+<span class="token output">Failed to issue method call: Unit httpd.service is masked.</span></code></pre><p>systemctl is-enabledコマンドで、サービスの状態が確認できます。httpdサービスの状態はmaskedとなっています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl is-enabled httpd</span></span>
+<span class="token output">masked</span></code></pre><p>systemctl unmaskコマンドを実行すると、シンボリックリンクが削除されて、指定したサービスがsystemdで管理されるようになります。httpdサービスの状態はdisabledになります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl unmask httpd</span></span>
+<span class="token output">rm '/etc/systemd/system/httpd.service'
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl is-enabled httpd</span></span>
+<span class="token output">disabled</span></code></pre></section><section class="level3" aria-labelledby="systemdのサービスに関連するディレクトリとシステム起動の仕組み"><h3 id="systemdのサービスに関連するディレクトリとシステム起動の仕組み">systemdのサービスに関連するディレクトリとシステム起動の仕組み</h3><p>systemdが内部的にどのような仕組みになっているのか、関連するディレクトリを解説します。</p><p>systemctl enableコマンドの動作を見ても分かる通り、systemdの仕組みにおいて、関連するディレクトリは以下の2つです。</p><section class="level4" aria-labelledby="usrlibsystemdsystemディレクトリ"><h4 id="usrlibsystemdsystemディレクトリ">/usr/lib/systemd/systemディレクトリ</h4><p>サービス起動スクリプトが格納されています。/etc/rc.d/init.dディレクトリに相当します。</p></section><section class="level4" aria-labelledby="etcsystemdsystemディレクトリ"><h4 id="etcsystemdsystemディレクトリ">/etc/systemd/systemディレクトリ</h4><p>サービス起動スクリプトに対するシンボリックリンクが配置されます。/etc/rc.dディレクトリに相当します。</p><p>システム起動時のsystemdの動作は、/etc/systemd/systemディレクトリ以下のサブディレクトリ内に作成されたサービス起動スクリプトへのシンボリックリンクが順次実行されてサービスが起動されます。シンボリックリンクの作成される場所は、役割別のターゲットユニット毎にディレクトリが分けられています。</p><p>ターゲット毎のディレクトリとその役割、実行の順番は以下の通りです。</p></section><section class="level4" aria-labelledby="1-etcsystemdsystemsysinittargetwants"><h4 id="1-etcsystemdsystemsysinittargetwants">1. /etc/systemd/system/sysinit.target.wants/</h4><p>システムの初期に実行されるスクリプトです。rc.sysinitスクリプトに相当します。</p></section><section class="level4" aria-labelledby="2-etcsystemdsystembasictargetwants"><h4 id="2-etcsystemdsystembasictargetwants">2. /etc/systemd/system/basic.target.wants/</h4><p>システム共通に実行されるスクリプトです。</p></section><section class="level4" aria-labelledby="3-etcsystemdsystemmulti-usertargetwants"><h4 id="3-etcsystemdsystemmulti-usertargetwants">3. /etc/systemd/system/multi-user.target.wants/</h4><p>従来のランレベル3（CUI）に相当します。</p></section><section class="level4" aria-labelledby="4-etcsystemdsystemgraphicaltargetwants"><h4 id="4-etcsystemdsystemgraphicaltargetwants">4. /etc/systemd/system/graphical.target.wants/</h4><p>従来のランレベル5（GUI）に相当します。</p><p>SysV initではランレベル3とランレベル5は別々の扱いでしたが、systemdではmulti-user.targetを実行後にgraphical.targetが実行されるようになっています。</p><p>どこまで実行するかは、次に説明するデフォルトターゲットの設定によって決められています。</p></section></section><section class="level3" aria-labelledby="デフォルトターゲットの変更"><h3 id="デフォルトターゲットの変更">デフォルトターゲットの変更</h3><p>systemdではランレベルではなく、サービス起動スクリプトを順番に実行していき、デフォルトターゲットで指定されたターゲットまで実行します。デフォルトターゲットを変更することで、CUI起動をするか、GUI起動にするかを選択できます。</p><p>デフォルトターゲットの変更は、systemctl set-defaultコマンドを実行します。これは、SysV initの設定ファイル/etc/inittabで指定している起動時ランレベル（initdefault）の変更に相当します。</p><section class="level4" aria-labelledby="デフォルトターゲットの確認"><h4 id="デフォルトターゲットの確認">デフォルトターゲットの確認</h4><p>systemctl get-defaultコマンドで、現在のデフォルトターゲットを確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl get-default</span></span>
+<span class="token output">graphical.target</span></code></pre></section><section class="level4" aria-labelledby="デフォルトターゲットをcuiに変更"><h4 id="デフォルトターゲットをcuiに変更">デフォルトターゲットをCUIに変更</h4><p>デフォルトターゲットをmulti-user.targetに変更し、再起動します。CUIで起動してくることを確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl set-default multi-user.target</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">reboot</span></span></span></code></pre></section><section class="level4" aria-labelledby="デフォルトターゲットをguiに変更"><h4 id="デフォルトターゲットをguiに変更">デフォルトターゲットをGUIに変更</h4><p>GUIでの起動に戻すには、以下のsystemctl set-defaultコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl set-default graphical.target</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">reboot</span></span></span></code></pre></section></section><section class="level3" aria-labelledby="現在のターゲットの一時的な変更"><h3 id="現在のターゲットの一時的な変更">現在のターゲットの一時的な変更</h3><p>systemdでの現在のターゲットを一時的に変更するには、systemctl isolateコマンドを実行します。これは、SysV initのランレベル変更（telinitコマンド）に相当します。</p><p>GUIからCUIに変更します。GUIログインしている場合、ログアウトします。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl isolate multi-user.target</span></span></code></pre><p>CUIからGUIに変更します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl isolate graphical.target</span></span></code></pre></section></section><section class="level2" aria-labelledby="journaldによるログ記録"><h2 id="journaldによるログ記録">journaldによるログ記録</h2><p>systemdにはサービスなどからのログを記録するjournaldが用意されており、syslogとは別にログが記録されています。</p><section class="level3" aria-labelledby="journaldのログの確認"><h3 id="journaldのログの確認">journaldのログの確認</h3><p>journaldのログを確認するには、journalctlコマンドを実行します。オプションを付与しないで実行すると、すべてのログが表示されます。</p><p>以下の例では、dmesgコマンドで確認できるLinuxカーネル起動時のログが記録されているのが分かります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">journalctl</span></span>
+<span class="token output">-- Logs begin at 水 2015-01-28 17:29:04 JST, end at 水 2015-01-28 17:29:38 JST.
+ 1月 28 17:29:04 centos7.example.com systemd-journal[149]: Runtime journal is us
+ 1月 28 17:29:04 centos7.example.com systemd-journal[149]: Runtime journal is us
+（略）</span></code></pre><p>特定のサービスのログに絞るには、-uオプションを付与して実行します。</p><p>以下の例では、httpdサービス起動時のログが確認できます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">journalctl -u httpd</span></span>
+<span class="token output">-- Logs begin at 水 2015-01-28 17:29:04 JST, end at 水 2015-01-28 17:31:34 JST.
+ 1月 28 17:31:28 centos7.example.com systemd[1]: Starting The Apache HTTP Server
+ 1月 28 17:31:34 centos7.example.com httpd[2232]: AH00557: httpd: apr_sockaddr_i
+ 1月 28 17:31:34 centos7.example.com httpd[2232]: AH00558: httpd: Could not reli
+ 1月 28 17:31:34 centos7.example.com systemd[1]: Started The Apache HTTP Server.</span></code></pre></section><section class="level3" aria-labelledby="journaldのログの保存"><h3 id="journaldのログの保存">journaldのログの保存</h3><p>journaldのログは、再起動すると消えてしまう設定がデフォルトとなっています。journaldの設定ファイル/etc/systemd/journald.confのStorage設定の値がデフォルトではautoに設定されています。この設定は、以下のように動作します。</p><ol>
+<li>/var/log/journalディレクトリが存在すれば書き込む</li>
+<li>/var/log/journalディレクトリが存在しないか、書き込めない場合には、/run/log/journalディレクトリに書き込む</li>
+</ol><p>デフォルトでは/var/log/journalディレクトリは存在しないため、/run/log/journalディレクトリにログが書き込まれます。/run/log/journalディレクトリはtmpfsでメモリ上に作られた一時領域なので、システム再起動時にログのファイルは消えてしまいます。</p><p>journaldのログをシステム再起動時に消えないようにするには、以下のように/var/log/journalディレクトリを作成して、システムを再起動します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">mkdir</span> /var/log/journal</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">chmod</span> <span class="token number">700</span> /var/log/journal</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">reboot</span></span></span></code></pre><p>ログファイルが作成されたことを確認します</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ls</span> -l /var/log/journal/</span></span>
+<span class="token output">合計 0
+drwxr-sr-x. 2 root systemd-journal 49  1月 28 14:53 3b71b9857a284561a3450996bf78a306
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">ls</span> -l /var/log/journal/3b71b9857a284561a3450996bf78a306/</span></span>
+<span class="token output">合計 16392
+-rw-r-----. 1 root root            8388608  1月 28 14:56 system.journal
+-rw-r-----+ 1 root systemd-journal 8388608  1月 28 14:55 user-42.journal</span></code></pre></section></section><section class="level2" aria-labelledby="firewalld-によるパケットフィルタリング"><h2 id="firewalld-によるパケットフィルタリング">firewalld によるパケットフィルタリング</h2><p>CentOS 7では、Linuxカーネルのパケットフィルタリングの仕組みであるiptablesをfirewalldサービスが管理しています。firewalldを利用すると複雑なパケットフィルタリングを実現できますが、ここでは基本的な設定を解説します。</p><p>また、複雑な設定が不要な場合には従来のiptablesサービスによる管理に戻すこともできます。</p><section class="level3" aria-labelledby="firewalld-の設定確認"><h3 id="firewalld-の設定確認">firewalld の設定確認</h3><p>firewalldでは、パケットフィルタリングの設定を「ゾーン」という仕組みで管理しています。</p><p>ゾーンを指定しなかった場合に利用されるデフォルトゾーンを確認するには、firewall-cmdコマンドに--get-default-zoneオプションを付与して実行します。デフォルトではpublicというゾーンが利用されるのが分かります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">firewall-cmd --get-default-zone</span></span>
+<span class="token output">public</span></code></pre><p>デフォルトゾーンpublicの設定を確認します。DHCPクライアントとSSHが許可されています。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">firewall-cmd --list-all</span></span>
+<span class="token output">public (default, active)
+  interfaces: eth0
+  sources:
+  services: dhcpv6-client ssh
+  ports:
+  masquerade: no
+  forward-ports:
+  icmp-blocks:
+  rich rules:</span></code></pre><p>デフォルトゾーンで許可されているサービスだけを確認するには、--list-servicesオプションを付与します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">firewall-cmd --list-services</span></span>
+<span class="token output">dhcpv6-client ssh</span></code></pre><p>定義されているサービスを確認します。ここで確認できるサービスをゾーンに適用することで、受信パケットを許可できます。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">firewall-cmd --get-services</span></span>
+<span class="token output">amanda-client bacula bacula-client dhcp dhcpv6 dhcpv6-client dns ftp high-availability http https imaps ipp ipp-client ipsec kerberos kpasswd ldap ldaps libvirt libvirt-tls mdns mountd ms-wbt mysql nfs ntp openvpn pmcd pmproxy pmwebapi pmwebapis pop3s postgresql proxy-dhcp radius rpc-bind samba samba-client smtp ssh telnet tftp tftp-client transmission-client vnc-server wbem-https</span></code></pre></section><section class="level3" aria-labelledby="firewalld-でhttpを許可する"><h3 id="firewalld-でhttpを許可する">firewalld でHTTPを許可する</h3><p>firewalldの設定を変更して、HTTPの受信を許可します。</p><p>--add-serviceオプションで定義されているサービスをゾーンに適用します。</p><p>--permanentオプションを付与すると、ゾーンの設定ファイルである/etc/firewalld/zones/public.xmlが修正されて、システム再起動後でもHTTPの受信が許可されるようになります。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">firewall-cmd --add-service<span class="token operator">=</span>http  --permanent</span></span>
+<span class="token output">success
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">firewall-cmd --list-services</span></span>
+<span class="token output">dhcpv6-client http ssh
+</span><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash"><span class="token function">cat</span> /etc/firewalld/zones/public.xml</span></span>
+<span class="token output">&#x3C;?xml version="1.0" encoding="utf-8"?>
+&#x3C;zone>
+  &#x3C;short>Public&#x3C;/short>
+  &#x3C;description>For use in public areas. You do not trust the other computers on networks to not harm your computer. Only selected incoming connections are accepted.&#x3C;/description>
+  &#x3C;service name="dhcpv6-client"/>
+  &#x3C;service name="http"/>
+  &#x3C;service name="ssh"/>
+&#x3C;/zone></span></code></pre><p>Webサービスを起動し、外部からWebサーバに接続できることを確認します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl start httpd</span></span></code></pre></section><section class="level3" aria-labelledby="iptables-を有効にする"><h3 id="iptables-を有効にする">iptables を有効にする</h3><p>firewalldサービスを停止し、iptablesサービスを有効にするには以下のコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl stop firewalld</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl disable firewalld</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl <span class="token builtin class-name">enable</span> iptables</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl start iptables</span></span></code></pre><p>firewalld サービスを有効に戻すには、以下のコマンドを実行します。</p><pre class="language-shell-session"><code class="language-shell-session"><span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl stop iptables</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl disable iptables</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl <span class="token builtin class-name">enable</span> firewalld</span></span>
+<span class="token command"><span class="token shell-symbol important">#</span> <span class="token bash language-bash">systemctl start firewalld</span></span></code></pre><p>*NetworkManager用管理ツール nmtui<br>
+CentOS 7でも引き続きNetworkManagerを使ってネットワークを管理します。</p><p>NetworkManagerでは、設定ファイルを直接編集することは推奨されていません。GUIとCUI用の管理ツールが提供されているので、ツールを使って設定を変更します。</p><figure><img src="nmtui1.png" alt="GUIのNetworkManager設定画面"><figcaption aria-hidden="true">GUIのNetworkManager設定画面</figcaption></figure><p>GUIでは「システムツール」メニューから「設定」を実行することでネットワークの設定も行えます。</p><figure><img src="nmtui2.png" alt="CUIのNetworkManager設定画面"><figcaption aria-hidden="true">CUIのNetworkManager設定画面</figcaption></figure><p>CUIではnmtuiを実行することで、簡単にネットワークが設定できます。ネットワークインターフェースのIPアドレス等の設定や、有効／無効の切り替えも行えるようになっています。</p></section></section></section>
+</body>
+</html>
